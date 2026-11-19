@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RotorWise Loop Simulator · 4-20 mA from the pipe to the screen</title>
+<style>
+:root{--bg:#14181d;--p1:#1b2026;--p2:#232a31;--p3:#2e3640;--ink:#e8ecf0;--mut:#98a4b0;--teal:#2bb3a8;--teal2:#1f8f86;--red:#e2483e;--amb:#f0a830;--ok:#3cc47c}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Segoe UI",Lato,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:14px;padding:7px 14px;background:#0f1215;border-bottom:1px solid #262d35;flex:0 0 auto}
+.brand{display:flex;align-items:center;gap:10px}
+.brand b{font-size:19px;letter-spacing:.3px}.brand b span{font-weight:300}
+.brand small{display:block;font-size:9px;letter-spacing:2.4px;color:var(--teal);margin-top:1px}
+.htitle{font-size:14px;color:var(--mut);border-left:1px solid #333b44;padding-left:14px}
+.htitle strong{color:var(--ink);font-weight:600}
+header .sp{flex:1}
+header a{color:var(--mut);font-size:12px;text-decoration:none}
+main{flex:1;display:flex;min-height:0}
+#stage{flex:1;position:relative;min-width:0;background:#cfd5db}
+#sv{width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+#zoom{position:absolute;left:10px;top:10px;display:flex;gap:6px}
+#zoom button{width:34px;height:34px;border-radius:8px;border:1px solid #9aa4ae;background:#f5f7f9;color:#222;font-size:18px;cursor:pointer}
+#toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:#1b2026ee;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .25s;max-width:80%;text-align:center;border:1px solid #39424c}
+#toast.on{opacity:1}
+#hint{position:absolute;left:10px;bottom:10px;background:#ffffffe6;color:#1b2026;padding:6px 10px;border-radius:8px;font-size:12px;border:1px solid #b8c0c8;max-width:60%}
+aside{width:372px;flex:0 0 372px;overflow:auto;background:var(--p1);border-left:1px solid #262d35;padding:10px 12px 30px}
+@media (max-width:980px){body{display:block;height:auto;overflow:auto}main{display:block}#stage{height:74vh}aside{width:auto;border-left:0}.htitle,header a{display:none}#hint{max-width:92%;font-size:11px}footer{position:static}}
+.card{background:var(--p2);border:1px solid #303841;border-radius:10px;padding:10px 11px;margin-bottom:10px}
+.card h3{margin:0 0 8px;font-size:11px;letter-spacing:1.8px;color:var(--teal);font-weight:600;text-transform:uppercase}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+.row label{font-size:13px;color:var(--ink)}
+.seg{display:flex;border:1px solid #3b444e;border-radius:8px;overflow:hidden}
+.seg button{background:transparent;color:var(--mut);border:0;padding:7px 9px;font-size:12px;cursor:pointer;border-right:1px solid #3b444e}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--teal2);color:#fff}
+.btn{background:var(--p3);color:var(--ink);border:1px solid #434d58;border-radius:8px;padding:7px 10px;font-size:12.5px;cursor:pointer}
+.btn:hover{border-color:var(--teal)}
+.btn.pri{background:var(--teal2);border-color:var(--teal);color:#fff}
+.btn.warn{background:#4a2a26;border-color:#8a3b33}
+input[type=range]{flex:1;accent-color:var(--teal)}
+.val{font-variant-numeric:tabular-nums;min-width:74px;text-align:right;font-size:13px}
+.sw{position:relative;width:46px;height:24px;border-radius:12px;background:#444d57;cursor:pointer;flex:0 0 auto;border:1px solid #57616c}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#cfd6dc;transition:left .15s}
+.sw.on{background:var(--ok)}.sw.on::after{left:24px;background:#fff}
+.small{font-size:11.5px;color:var(--mut);line-height:1.45}
+#report{font-size:12.5px;line-height:1.45}
+#report .it{display:flex;gap:7px;padding:5px 0;border-bottom:1px solid #2d343c}
+#report .ic{flex:0 0 18px;font-weight:700;text-align:center}
+#report .ok .ic{color:var(--ok)}#report .err .ic{color:var(--red)}#report .warn .ic{color:var(--amb)}#report .info .ic{color:var(--teal)}
+#report .ref{display:block;color:var(--mut);font-size:11px}
+#steps{list-style:none;padding:0;margin:0;font-size:12.5px}
+#steps li{display:flex;gap:7px;padding:3px 0;color:var(--mut)}
+#steps li::before{content:"○";color:#5b6772;flex:0 0 14px}
+#steps li.done{color:var(--ink)}#steps li.done::before{content:"✔";color:var(--ok)}
+select,input[type=number]{background:#12161a;color:var(--ink);border:1px solid #3b444e;border-radius:6px;padding:4px 6px;font-size:12.5px}
+input[type=number]{width:64px}
+.kbd{display:inline-block;border:1px solid #4a535d;border-radius:4px;padding:0 4px;font-size:11px}
+footer{font-size:10.5px;color:var(--mut);padding:5px 14px;background:#0f1215;border-top:1px solid #262d35;flex:0 0 auto}
+/* svg classes */
+.tgt{cursor:pointer}
+.tgt:hover .hl{opacity:.9}
+.hl{opacity:0;transition:opacity .1s}
+.tip{cursor:grab}
+.lbl{font-family:"Segoe UI",Lato,Arial,sans-serif}
+.mono{font-family:Consolas,"Cascadia Mono","DejaVu Sans Mono",monospace}
+@keyframes blink{50%{opacity:.25}}
+.blink{animation:blink 1s steps(1) infinite}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="lg" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".55" stop-color="#9aa3ac"/><stop offset="1" stop-color="#4b535b"/></radialGradient></defs><circle cx="20" cy="20" r="18" fill="url(#lg)"/><g fill="#2b3138" opacity=".85"><path d="M20 20 L20 3 A17 17 0 0 1 31 7 Z"/><path d="M20 20 L35 14 A17 17 0 0 1 35 27 Z"/><path d="M20 20 L30 34 A17 17 0 0 1 17 37 Z"/><path d="M20 20 L6 31 A17 17 0 0 1 3 18 Z"/><path d="M20 20 L7 7 A17 17 0 0 1 14 3.6 Z"/></g><circle cx="20" cy="20" r="5.5" fill="#d9dee3" stroke="#3a4148"/></svg>
+    <div><b>Rotor<span>Wise</span></b><small>MACHINERY &amp; PLANT TRAINING</small></div>
+  </div>
+  <div class="htitle"><strong>Loop Simulator</strong> · wire a 4-20 mA loop from the pipe to the screen</div>
+  <div class="sp"></div>
+  <a href="https://www.youtube.com/@RotorWise101" target="_blank" rel="noopener">youtube.com/@RotorWise101</a>
+</header>
+<main>
+  <div id="stage">
+    <svg id="sv" viewBox="0 0 1600 1040" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="zoom"><button id="zin" title="Zoom in">+</button><button id="zout" title="Zoom out">−</button><button id="zfit" title="Fit" style="font-size:13px">⤢</button></div>
+    <div id="toast"></div>
+    <div id="hint"></div>
+  </div>
+  <aside>
+    <div class="card">
+      <h3>Tool</h3>
+      <div class="seg" id="modes">
+        <button data-m="wire" class="on">✋ Wire</button>
+        <button data-m="pol">Polarity tester</button>
+        <button data-m="ohm">Multimeter Ω</button>
+        <button data-m="clamp">mA clamp</button>
+      </div>
+      <p class="small" id="modehelp"></p>
+    </div>
+    <div class="card">
+      <h3>Power</h3>
+      <div class="row"><div class="sw" id="pwr"></div><label for="pwr">24 V DC supply to the cabinet (PSU → AI card 41/44)</label></div>
+    </div>
+    <div class="card">
+      <h3>Process</h3>
+      <div class="row"><label style="width:96px">PT-101</label><input type="range" id="pp" min="-1" max="12" step="0.05" value="4.2"><span class="val" id="ppv">4.20 bar</span></div>
+      <div class="row"><label style="width:96px">TT-101</label><input type="range" id="tt" min="-30" max="190" step="0.5" value="65"><span class="val" id="ttv">65.0 °C</span></div>
+      <div class="row small">Transmitter ranges: PT-101 0-10 bar, TT-101 0-150 °C (our example plant).</div>
+    </div>
+    <div class="card">
+      <h3>Faults you can switch on</h3>
+      <div class="row"><div class="sw" id="ptfail"></div><label>PT-101 internal failure</label><span class="small">alarm</span><select id="ptal"><option value="H">HIGH</option><option value="L">LOW</option></select></div>
+      <div class="row"><div class="sw" id="ttfail"></div><label>TT-101 Pt100 burnt out</label><span class="small">alarm</span><select id="ttal"><option value="H">HIGH</option><option value="L">LOW</option></select></div>
+    </div>
+    <div class="card">
+      <h3>AI card + PLC program</h3>
+      <div class="row"><div class="sw on" id="wbd"></div><label>Wire break diagnostics</label><select id="wbl"><option value="1.185">limit 1.185 mA</option><option value="3.6">limit 3.6 mA</option></select></div>
+      <div class="row small" style="margin-top:-2px">The card's default is OFF; in our project it is switched ON.</div>
+      <div class="row"><label style="width:120px">PT-101 scaling</label><input type="number" id="ptlo" value="0" step="any"> to <input type="number" id="pthi" value="10" step="any"> bar</div>
+      <div class="row"><label style="width:120px">TT-101 scaling</label><input type="number" id="ttlo" value="0" step="any"> to <input type="number" id="tthi" value="150" step="any"> °C</div>
+    </div>
+    <div class="card">
+      <h3>Exercise</h3>
+      <div class="row">
+        <button class="btn" id="bEmpty">Start from scratch</button>
+        <button class="btn" id="bSolve">Show correct wiring</button>
+      </div>
+      <div class="row">
+        <button class="btn warn" id="bFault">🔧 Find the fault</button>
+        <button class="btn" id="bReveal" disabled>Reveal the answer</button>
+      </div>
+      <p class="small" id="faultTxt">"Find the fault" wires everything, hides one mistake and switches the power on. Use the HMI, the watch table and the test tools to find it, then fix it.</p>
+    </div>
+    <div class="card">
+      <h3>Your progress</h3>
+      <ul id="steps"></ul>
+    </div>
+    <div class="card">
+      <h3>Check my wiring</h3>
+      <div class="row"><button class="btn pri" id="bCheck">Check my wiring</button></div>
+      <div id="report" class="small">Press the button when you think you're done.</div>
+    </div>
+    <div class="card">
+      <h3>How to use</h3>
+      <p class="small">
+        <b>Wire:</b> drag a core end onto a screw or push-in terminal, or tap the core end and then tap the terminal. Drag it off again to take it out. A core is one piece of copper from end to end, so it is the same conductor at both ends.<br>
+        <b>Zoom:</b> mouse wheel, the + / − buttons, or drag the background to move around.<br>
+        <b>Polarity tester</b> (power ON): tap two points; green = red probe on the + side.<br>
+        <b>Multimeter Ω</b> (power OFF): ring out cores, or measure the Pt100.<br>
+        <b>mA clamp</b> (power ON): tap any core to read the loop current in it.
+      </p>
+      <p class="small">Values used: transmitter output 4-20 mA, saturation and alarm levels, the card's raw values (0 at 4 mA, 27648 at 20 mA, 32511 top of the overshoot range at 22.81 mA, -4864 at 1.185 mA, 32767 overflow, -32768 underflow), the terminal numbers and the wiring rules all come from the device manuals. Where a manual gives no number, the simulator shows none. Your own manuals and site standards come first.</p>
+    </div>
+  </aside>
+</main>
+<footer>RotorWise teaching tool · devices drawn as typical industrial equipment, RotorWise brand only · not a substitute for your plant's loop drawings, manuals or permits · youtube.com/@RotorWise101</footer>
+
+<script>
+"use strict";
+/* ============================================================ helpers */
+const NS = 'http://www.w3.org/2000/svg';
+const sv = document.getElementById('sv');
+function E(tag, a, p){ const e = document.createElementNS(NS, tag); if(a) for(const k in a) e.setAttribute(k, a[k]); if(p) p.appendChild(e); return e; }
+function T(x, y, s, a, p){ const t = E('text', Object.assign({x, y, class:'lbl'}, a||{}), p); t.textContent = s; return t; }
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function toast(s, ms){ const t = $('toast'); t.textContent = s; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(()=>t.classList.remove('on'), ms||2600); }
+
+/* ============================================================ facts used (see facts file)
+  PT (pressure transmitter manual): output 4-20 mA; saturation 3.9 / 20.8 mA; alarm <=3.75 / >=21.75 mA (p.23);
+      reversed power wires -> zero mA (troubleshooting table p.77); never put the loop on TEST (p.46);
+      shield trimmed/insulated at the transmitter, earthed at the supply end (p.50)
+  TT (temperature transmitter manual): + / - power, sensor 1-6, 4-wire RTD 1+2 / 3+4 (p.75);
+      standard saturation 3.9 / 20.5 mA, alarm 3.75 / 21.75 mA (Table 2-4 p.37); sensor failure -> output to the failure-mode switch level
+  AI card manual: 2-wire CH0 = 1 (U_V0) / 2 (I0+), CH1 = 4/5 ... (Fig 3-4 p.15); 4-wire CH0 2/3 (Fig 3-3 p.14);
+      supply 41 L+ / 44 M (Fig 3-1 p.12); raw values Table C-8 p.67; wire break limit 1.185 or 3.6 mA, default diag OFF (p.22)
+  Pt100: 100 ohm at 0 degC, alpha 0.00385 (TT manual p.94-95); 4-wire leads 2 red at one end, 2 white at the other (IEC 60751 colour code)
+*/
+const F = {
+  ptSatLo:3.9, ptSatHi:20.8, alLo:3.75, alHi:21.75,
+  ttSatLo:3.9, ttSatHi:20.5,
+  rawTop:27648, rawOverTop:32511, mAOverTop:22.81, rawUnderBot:-4864, mAUnderBot:1.185,
+  pt100R0:100, pt100A:0.00385
+};
+
+/* ============================================================ defs (gradients, filters) */
+const defs = E('defs', {}, sv);
+function lin(id, stops, x2, y2){ const g = E('linearGradient', {id, x1:0, y1:0, x2:x2===undefined?0:x2, y2:y2===undefined?1:y2}, defs); stops.forEach(s=>E('stop', {offset:s[0], 'stop-color':s[1]}, g)); return g; }
+function rad(id, stops, cx, cy){ const g = E('radialGradient', {id, cx:cx||'38%', cy:cy||'32%', r:'75%'}, defs); stops.forEach(s=>E('stop', {offset:s[0], 'stop-color':s[1]}, g)); return g; }
+lin('gPipe', [[0,'#5d666f'],[.18,'#c9cfd5'],[.38,'#eef1f4'],[.62,'#9aa3ac'],[1,'#4c545c']]);
+lin('gPipeV', [[0,'#5d666f'],[.18,'#c9cfd5'],[.38,'#eef1f4'],[.62,'#9aa3ac'],[1,'#4c545c']], 1, 0);
+lin('gAlu', [[0,'#eef1f3'],[.45,'#c3cad1'],[1,'#7f8891']]);
+lin('gAluH', [[0,'#7f8891'],[.3,'#d7dde2'],[.55,'#f2f4f6'],[1,'#8d969f']], 1, 0);
+lin('gDark', [[0,'#3c444d'],[1,'#1f242a']]);
+lin('gMod', [[0,'#3a4149'],[.5,'#2c3239'],[1,'#22272d']], 1, 0);
+lin('gPlate', [[0,'#e3e7ea'],[1,'#c6ccd2']]);
+lin('gCab', [[0,'#d8dde1'],[1,'#b9c0c7']]);
+lin('gJB', [[0,'#e9ecef'],[1,'#b8bfc6']]);
+lin('gTerm', [[0,'#b6bdc4'],[1,'#8c949c']], 1, 0);
+lin('gTermB', [[0,'#5d7f9f'],[1,'#3f6282']], 1, 0);
+lin('gTeal', [[0,'#3cc6ba'],[1,'#1f8f86']]);
+lin('gGlass', [[0,'#a9c4bf'],[1,'#7f9f99']]);
+lin('gGlassOff', [[0,'#5c6a69'],[1,'#3f4a49']]);
+lin('gCopper', [[0,'#f3c48d'],[1,'#b8742f']]);
+lin('gBar', [[0,'#e8a25a'],[.5,'#f6c58b'],[1,'#b9722e']]);
+lin('gScreen', [[0,'#eef1f3'],[1,'#dde2e6']]);
+lin('gMeter', [[0,'#424a53'],[1,'#252a30']]);
+lin('gMeterY', [[0,'#3c4650'],[1,'#20262c']]);
+rad('gScrew', [[0,'#ffffff'],[.45,'#c4cbd2'],[1,'#68717a']]);
+rad('gScrewB', [[0,'#fff6d8'],[.45,'#d8bf72'],[1,'#7a6630']]);
+rad('gCap', [[0,'#f3f5f7'],[.6,'#b9c1c8'],[1,'#6f7880']]);
+rad('gLedG', [[0,'#eaffef'],[.4,'#45e07a'],[1,'#138a3c']]);
+rad('gLedR', [[0,'#ffe9e6'],[.4,'#ff4a3a'],[1,'#a3170e']]);
+rad('gLedA', [[0,'#fff6dd'],[.4,'#ffb53a'],[1,'#a86a0a']]);
+rad('gLedOff', [[0,'#6d757d'],[1,'#2a2f34']]);
+const fs = E('filter', {id:'sh', x:'-10%', y:'-10%', width:'130%', height:'130%'}, defs);
+E('feDropShadow', {dx:2, dy:3, stdDeviation:3, 'flood-color':'#000', 'flood-opacity':.28}, fs);
+const fs2 = E('filter', {id:'sh2', x:'-20%', y:'-20%', width:'140%', height:'140%'}, defs);
+E('feDropShadow', {dx:1, dy:1.5, stdDeviation:1.2, 'flood-color':'#000', 'flood-opacity':.35}, fs2);
+const fg = E('filter', {id:'glow', x:'-50%', y:'-50%', width:'200%', height:'200%'}, defs);
+E('feGaussianBlur', {stdDeviation:3, result:'b'}, fg); const fm = E('feMerge', {}, fg); E('feMergeNode', {in:'b'}, fm); E('feMergeNode', {in:'SourceGraphic'}, fm);
+
+/* layers */
+const L = {};
+['bg','art','jackets','pts','wires','tips','over','probe'].forEach(n => L[n] = E('g', {id:'L_'+n}, sv));
+
+/* ============================================================ static art */
+function screw(x, y, r, p, brass){
+  const g = E('g', {}, p);
+  E('circle', {cx:x, cy:y, r:r+2.2, fill:'#5b636b'}, g);
+  E('circle', {cx:x, cy:y, r:r, fill:brass?'url(#gScrewB)':'url(#gScrew)', stroke:'#4a5259', 'stroke-width':.8}, g);
+  E('line', {x1:x-r*.68, y1:y-r*.18, x2:x+r*.68, y2:y+r*.18, stroke:'#4a5056', 'stroke-width':1.6, 'stroke-linecap':'round'}, g);
+  E('line', {x1:x-r*.18, y1:y+r*.68, x2:x+r*.18, y2:y-r*.68, stroke:'#4a5056', 'stroke-width':1.6, 'stroke-linecap':'round'}, g);
+  return g;
+}
+function bolt(x, y, p){ E('circle', {cx:x, cy:y, r:4.2, fill:'url(#gScrew)', stroke:'#555', 'stroke-width':.6}, p); E('circle', {cx:x, cy:y, r:1.4, fill:'#666'}, p); }
+function gland(x, y, ang, p){ const g = E('g', {transform:`translate(${x} ${y}) rotate(${ang})`}, p);
+  E('rect', {x:-13, y:-6, width:26, height:12, rx:2, fill:'url(#gAluH)', stroke:'#5c646c'}, g);
+  E('path', {d:'M-11 6 L-9 16 L9 16 L11 6 Z', fill:'#3d454d', stroke:'#262b30'}, g);
+  E('rect', {x:-9, y:16, width:18, height:7, rx:2, fill:'#2a2f35'}, g); return g; }
+
+/* backgrounds */
+E('rect', {x:0, y:0, width:1600, height:1040, fill:'#cfd5db'}, L.bg);
+E('rect', {x:8, y:8, width:690, height:1024, rx:14, fill:'#dfe5e9', stroke:'#b5bec6'}, L.bg);
+T(22, 32, 'FIELD · PUMP P-101 DISCHARGE', {fill:'#5b6773', 'font-size':12, 'letter-spacing':2, 'font-weight':600}, L.bg);
+E('rect', {x:704, y:8, width:240, height:1024, rx:14, fill:'#d9dfe4', stroke:'#b5bec6'}, L.bg);
+T(718, 32, 'FIELD · JUNCTION BOX', {fill:'#5b6773', 'font-size':12, 'letter-spacing':2, 'font-weight':600}, L.bg);
+E('rect', {x:950, y:8, width:642, height:1024, rx:14, fill:'#c4ccd3', stroke:'#a8b2bb'}, L.bg);
+T(964, 32, 'INSTRUMENT ROOM · CABINET UCP-101', {fill:'#4f5b66', 'font-size':12, 'letter-spacing':2, 'font-weight':600}, L.bg);
+
+const A = L.art;
+/* ---------- pipe */
+E('rect', {x:16, y:72, width:672, height:50, fill:'url(#gPipe)', stroke:'#4f575f'}, A);
+[[16],[672]].forEach(([x])=>{ E('rect', {x:x, y:62, width:16, height:70, rx:2, fill:'url(#gAluH)', stroke:'#4f575f'}, A); });
+for(let i=0;i<5;i++){ const x = 250+i*36; E('path', {d:`M${x} 97 l14 0 m-5 -5 l5 5 l-5 5`, stroke:'#ffffffaa', 'stroke-width':2.2, fill:'none'}, A); }
+T(40, 58, 'Pump discharge header · water', {fill:'#4e5a65', 'font-size':11.5}, A);
+
+/* ---------- PT-101 pressure transmitter (side view, terminal compartment open) */
+(function(){
+  const g = E('g', {filter:'url(#sh)'}, A);
+  // tapping, root valve, manifold, flange
+  E('rect', {x:162, y:122, width:16, height:22, fill:'url(#gPipeV)', stroke:'#4f575f'}, g);
+  E('rect', {x:150, y:142, width:40, height:20, rx:3, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  E('rect', {x:128, y:149, width:22, height:6, rx:2, fill:'#c8322b'}, g); T(108, 141, 'root valve', {'font-size':9, fill:'#5b6773'}, A);
+  E('rect', {x:162, y:162, width:16, height:12, fill:'url(#gPipeV)', stroke:'#4f575f'}, g);
+  E('rect', {x:132, y:174, width:76, height:26, rx:3, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  bolt(140, 187, g); bolt(200, 187, g);
+  E('rect', {x:146, y:200, width:48, height:14, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  E('rect', {x:152, y:214, width:36, height:34, rx:6, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  E('rect', {x:162, y:246, width:16, height:10, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  // housing
+  E('rect', {x:50, y:254, width:302, height:160, rx:34, fill:'url(#gAlu)', stroke:'#5c646c', 'stroke-width':1.5}, g);
+  E('rect', {x:194, y:254, width:14, height:160, fill:'#aeb6bd', opacity:.55}, g);
+  // LCD side (cover with window)
+  E('circle', {cx:124, cy:334, r:66, fill:'url(#gCap)', stroke:'#5c646c', 'stroke-width':1.5}, g);
+  E('circle', {cx:124, cy:334, r:52, fill:'#2a3036'}, g);
+  E('rect', {x:82, y:304, width:84, height:60, rx:5, id:'ptLcdBg', fill:'url(#gGlassOff)', stroke:'#1d2226'}, g);
+  // terminal side (cover off)
+  E('circle', {cx:272, cy:334, r:76, fill:'url(#gCap)', stroke:'#5c646c', 'stroke-width':1.5}, g);
+  E('circle', {cx:272, cy:334, r:66, fill:'#30373e'}, g);
+  E('circle', {cx:272, cy:334, r:66, fill:'none', stroke:'#8a939b', 'stroke-width':2, 'stroke-dasharray':'3 3'}, g);
+  E('rect', {x:206, y:314, width:132, height:62, rx:6, fill:'#ecebe4', stroke:'#9b9a91'}, g);
+  // nameplate
+  E('rect', {x:140, y:384, width:62, height:20, rx:3, fill:'url(#gTeal)'}, g);
+})();
+T(171, 398, 'PT-101', {'font-size':11, fill:'#fff', 'text-anchor':'middle', 'font-weight':700}, A);
+T(124, 300, 'display', {'font-size':9, fill:'#c9d1d8', 'text-anchor':'middle'}, A);
+const ptLcd1 = T(124, 336, '', {'font-size':25, fill:'#16211f', 'text-anchor':'middle', class:'mono', 'font-weight':700}, A);
+const ptLcd2 = T(124, 356, '', {'font-size':12, fill:'#16211f', 'text-anchor':'middle', class:'mono'}, A);
+T(286, 300, 'terminals', {'font-size':9, fill:'#e3e8ec', 'text-anchor':'middle'}, A); T(272, 244, 'cover off', {'font-size':9, fill:'#5b6773', 'text-anchor':'middle'}, A);
+T(228, 368, '+', {'font-size':13, fill:'#30363b', 'text-anchor':'middle', 'font-weight':700}, A);
+T(272, 367, 'PWR/COMM −', {'font-size':8, fill:'#30363b', 'text-anchor':'middle', 'font-weight':700}, A);
+T(316, 367, 'TEST', {'font-size':8.5, fill:'#30363b', 'text-anchor':'middle', 'font-weight':700}, A);
+T(238, 300, '⏚', {'font-size':13, fill:'#9fd18b', 'text-anchor':'middle'}, A);
+gland(272, 418, 0, A);
+T(40, 444, 'PT-101 · pressure transmitter', {'font-size':11, fill:'#3f4a55', 'font-weight':600}, A); T(40, 458, '0-10 bar · 4-20 mA · 2-wire', {'font-size':10, fill:'#5b6773'}, A);
+
+/* ---------- TT-101 thermowell + connection head (lid open) + head-mount transmitter */
+(function(){
+  const g = E('g', {filter:'url(#sh)'}, A);
+  E('path', {d:'M474 122 L474 96 Q480 86 486 96 L486 122 Z', fill:'#7c858d', opacity:.6, stroke:'#4f575f', 'stroke-dasharray':'3 2'}, A);
+  E('rect', {x:466, y:122, width:28, height:16, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  E('rect', {x:454, y:138, width:52, height:12, rx:2, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  bolt(462, 144, g); bolt(498, 144, g);
+  E('rect', {x:471, y:150, width:18, height:70, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  E('rect', {x:464, y:190, width:32, height:14, rx:2, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  E('rect', {x:470, y:220, width:20, height:22, fill:'url(#gAluH)', stroke:'#4f575f'}, g);
+  E('circle', {cx:480, cy:330, r:92, fill:'url(#gCap)', stroke:'#5c646c', 'stroke-width':1.5}, g);
+  E('circle', {cx:480, cy:330, r:82, fill:'#30373e'}, g);
+  // head-mount transmitter puck
+  E('circle', {cx:480, cy:330, r:64, fill:'#ecebe4', stroke:'#9b9a91', 'stroke-width':1.2}, g);
+  E('circle', {cx:480, cy:330, r:9, fill:'#5a6168', stroke:'#3b4147'}, g);
+  E('rect', {x:455, y:401, width:50, height:13, rx:2, fill:'url(#gTeal)'}, g);
+  // lid lying open beside (hinge)
+  E('ellipse', {cx:596, cy:250, rx:30, ry:68, fill:'url(#gCap)', stroke:'#5c646c', transform:'rotate(18 596 250)'}, g);
+})();
+T(480, 411, 'TT-101', {'font-size':9, fill:'#fff', 'text-anchor':'middle', 'font-weight':700}, A);
+T(480, 226, '', {}, A);
+gland(572, 336, -90, A);
+T(400, 444, 'TT-101 · Pt100 + head transmitter', {'font-size':11, fill:'#3f4a55', 'font-weight':600}, A); T(400, 458, '0-150 °C · 4-20 mA · 2-wire', {'font-size':10, fill:'#5b6773'}, A);
+T(400, 200, 'Pt100 in a thermowell', {'font-size':9, fill:'#5b6773'}, A);
+
+/* ---------- JB-1 */
+(function(){
+  const g = E('g', {filter:'url(#sh)'}, A);
+  E('rect', {x:716, y:206, width:214, height:446, rx:8, fill:'url(#gJB)', stroke:'#7d868e', 'stroke-width':1.5}, g);
+  E('rect', {x:728, y:236, width:190, height:392, rx:4, fill:'#eef1f3', stroke:'#a7b0b8'}, g);
+  [[724,214],[922,214],[724,644],[922,644]].forEach(([x,y])=>bolt(x,y,g));
+  // DIN rail
+  E('rect', {x:732, y:418, width:182, height:14, fill:'url(#gAluH)', stroke:'#8a939b'}, g);
+})();
+T(823, 252, 'JB-1', {'font-size':13, fill:'#3f4a55', 'text-anchor':'middle', 'font-weight':700}, A);
+T(924, 384, 'field', {'font-size':8, fill:'#6a7681', 'text-anchor':'end'}, A);
+T(924, 474, 'home', {'font-size':8, fill:'#6a7681', 'text-anchor':'end'}, A);
+gland(765, 206, 180, A); gland(877, 206, 180, A); gland(823, 652, 0, A);
+const JBT = ['1','2','3','4','5','6','S1','S2'];
+JBT.forEach((n,i)=>{
+  const x = 746+i*22, sh = n[0]==='S';
+  E('rect', {x:x-10, y:372, width:20, height:106, rx:2, fill:sh?'url(#gTermB)':'url(#gTerm)', stroke:'#5f676f'}, A);
+  E('rect', {x:x-8, y:416, width:16, height:18, fill:'#fbfbf6', stroke:'#9a9a90'}, A);
+  T(x, 429, sh?'S':n, {'font-size':10.5, fill:'#2a3036', 'text-anchor':'middle', 'font-weight':700}, A);
+});
+E('rect', {x:886, y:404, width:28, height:6, rx:2, fill:'#d9a54a', stroke:'#8a6420'}, A);
+
+/* ---------- cabinet plate */
+(function(){
+  const g = E('g', {filter:'url(#sh)'}, A);
+  E('rect', {x:960, y:44, width:390, height:948, rx:6, fill:'url(#gPlate)', stroke:'#8f99a2'}, g);
+  E('rect', {x:966, y:186, width:378, height:16, fill:'url(#gAluH)', stroke:'#8a939b'}, g);
+  // PSU
+  E('rect', {x:972, y:64, width:88, height:274, rx:5, fill:'url(#gMod)', stroke:'#1a1e22'}, g);
+  // CPU
+  E('rect', {x:1066, y:64, width:88, height:274, rx:5, fill:'url(#gMod)', stroke:'#1a1e22'}, g);
+  // AI card
+  E('rect', {x:1160, y:64, width:182, height:676, rx:5, fill:'url(#gMod)', stroke:'#1a1e22'}, g);
+  E('rect', {x:1170, y:212, width:162, height:466, rx:4, fill:'#262b31', stroke:'#111'}, g);
+  // shield bar
+  E('rect', {x:982, y:860, width:170, height:16, rx:3, fill:'url(#gBar)', stroke:'#8a5a20'}, g);
+  E('rect', {x:992, y:876, width:8, height:22, fill:'#7f8891'}, g); E('rect', {x:1134, y:876, width:8, height:22, fill:'#7f8891'}, g);
+})();
+// PSU details
+T(1016, 86, 'RW-PSU', {'font-size':10, fill:'#e8ecf0', 'text-anchor':'middle', 'font-weight':700}, A);
+T(1016, 100, '24 V DC', {'font-size':10, fill:'#2bb3a8', 'text-anchor':'middle'}, A);
+const psuLed = E('circle', {cx:1016, cy:124, r:5, fill:'url(#gLedOff)'}, A); T(1016, 142, 'DC OK', {'font-size':8, fill:'#aab4bd', 'text-anchor':'middle'}, A);
+['+1','−1','−2'].forEach((s,i)=>{ const x = 990+i*26; screw(x, 312, 6, A); T(x, 298, s, {'font-size':9, fill:'#e8ecf0', 'text-anchor':'middle'}, A); });
+['L','N','⏚'].forEach((s,i)=>{ const x = 990+i*26; screw(x, 236, 6, A); T(x, 222, s, {'font-size':9, fill:'#e8ecf0', 'text-anchor':'middle'}, A); });
+E('path', {d:'M990 230 C 990 160 1000 150 960 120', stroke:'#4b3a2a', 'stroke-width':4, fill:'none'}, A);
+E('path', {d:'M1016 230 C 1016 150 1000 140 960 110', stroke:'#2c63b8', 'stroke-width':4, fill:'none'}, A);
+E('path', {d:'M1042 230 C 1042 140 1010 130 960 100', stroke:'#7fbf3f', 'stroke-width':4, fill:'none'}, A);
+// CPU details
+T(1110, 86, 'RW-1500', {'font-size':10, fill:'#e8ecf0', 'text-anchor':'middle', 'font-weight':700}, A);
+T(1110, 100, 'CPU', {'font-size':10, fill:'#2bb3a8', 'text-anchor':'middle'}, A);
+E('rect', {x:1078, y:108, width:64, height:40, rx:3, fill:'#0d1114', stroke:'#000'}, A);
+const cpuTxt = T(1110, 133, '', {'font-size':11, fill:'#3cc47c', 'text-anchor':'middle', class:'mono'}, A);
+const cpuLeds = ['RUN','ERROR','MAINT'].map((s,i)=>{ const l = E('circle', {cx:1084+i*26, cy:166, r:4.5, fill:'url(#gLedOff)'}, A); T(1084+i*26, 180, s, {'font-size':7, fill:'#aab4bd', 'text-anchor':'middle'}, A); return l; });
+E('rect', {x:1088, y:286, width:20, height:18, rx:2, fill:'#111', stroke:'#555'}, A); T(1098, 318, 'X1', {'font-size':8, fill:'#aab4bd', 'text-anchor':'middle'}, A);
+E('path', {d:'M1098 304 L1098 826 Q1098 834 1106 834 L1348 834 Q1356 834 1356 826 L1356 456 Q1356 448 1364 448 L1380 448', stroke:'#2f9e5a', 'stroke-width':4, fill:'none', opacity:.9}, A); T(1300, 828, 'PROFINET to HMI', {'font-size':8.5, fill:'#2f6e48', 'text-anchor':'middle'}, A);
+// AI card header
+T(1180, 84, 'RW-1500', {'font-size':10, fill:'#e8ecf0', 'font-weight':700}, A);
+T(1180, 98, 'AI 8xU/I/RTD/TC', {'font-size':10, fill:'#2bb3a8'}, A);
+const cardLeds = {};
+['RUN','ERROR','PWR'].forEach((s,i)=>{ cardLeds[s] = E('circle', {cx:1186+i*34, cy:118, r:5, fill:'url(#gLedOff)'}, A); T(1186+i*34, 136, s, {'font-size':7.5, fill:'#aab4bd', 'text-anchor':'middle'}, A); });
+const chLed = [];
+for(let i=0;i<8;i++){ const y = 104+i*12.5; T(1282, y+3.5, 'CH'+i, {'font-size':8, fill:'#aab4bd', 'text-anchor':'end'}, A);
+  chLed.push({g:E('circle', {cx:1296, cy:y, r:3.8, fill:'url(#gLedOff)'}, A), r:E('circle', {cx:1310, cy:y, r:3.8, fill:'url(#gLedOff)'}, A)}); }
+T(1296, 208, 'ok', {'font-size':7, fill:'#aab4bd', 'text-anchor':'middle'}, A); T(1310, 208, 'diag', {'font-size':7, fill:'#aab4bd', 'text-anchor':'middle'}, A);
+T(1180, 160, 'front connector', {'font-size':8, fill:'#aab4bd'}, A); T(1180, 172, '40 push-in terminals', {'font-size':8, fill:'#aab4bd'}, A);
+const AIFN = {1:'U_V0',2:'I0+',3:'I0−',4:'U_V1',5:'I1+',8:'U_V2',9:'I2+',12:'U_V3',13:'I3+',18:'M_ANA',21:'U_V4',22:'I4+',24:'U_V5',25:'I5+',28:'U_V6',29:'I6+',32:'U_V7',33:'I7+'};
+function aiXY(n){ return n<=20 ? [1222, 232+(n-1)*22.5] : [1280, 232+(n-21)*22.5]; }
+for(let n=1;n<=40;n++){
+  const [x,y] = aiXY(n), left = n<=20;
+  E('rect', {x:x-12, y:y-8, width:24, height:16, rx:2, fill:'#d9dde1', stroke:'#7b838b'}, A);
+  E('rect', {x:left?x-11:x+3, y:y-5, width:8, height:10, rx:1.5, fill:'#e98a2c', stroke:'#9b5615'}, A);
+  E('rect', {x:left?x-1:x-9, y:y-5, width:10, height:10, rx:5, fill:'#3d434a'}, A);
+  T(left?x-21:x+21, y+3.5, String(n), {'font-size':8.5, fill:'#d0d6dc', 'text-anchor':'middle', class:'mono'}, A);
+  if(AIFN[n]) T(left?x-31:x+31, y+3, AIFN[n], {'font-size':7.2, fill:'#7fd6cc', 'text-anchor':left?'end':'start', class:'mono'}, A);
+}
+// 41-44 power element
+[41,42,43,44].forEach((n,i)=>{ const x = 1200+i*30, y = 708; E('rect', {x:x-11, y:y-9, width:22, height:18, rx:2, fill:'#d9dde1', stroke:'#7b838b'}, A); E('rect', {x:x-5, y:y-4, width:10, height:8, rx:4, fill:'#3d434a'}, A);
+  T(x, y+22, String(n), {'font-size':8.5, fill:'#d0d6dc', 'text-anchor':'middle', class:'mono'}, A); T(x, y-14, ['L+','L+','M','M'][i], {'font-size':7.5, fill:'#7fd6cc', 'text-anchor':'middle'}, A); });
+// pre-wired 24 V: PSU +1 -> 41, PSU -1 -> 44
+E('path', {d:'M990 318 L990 768 Q990 776 998 776 L1192 776 Q1200 776 1200 768 L1200 717', stroke:'#7a1d17', 'stroke-width':6, fill:'none'}, A);
+E('path', {d:'M990 318 L990 768 Q990 776 998 776 L1192 776 Q1200 776 1200 768 L1200 717', stroke:'#c8322b', 'stroke-width':4, fill:'none'}, A);
+E('path', {d:'M1016 318 L1016 756 Q1016 764 1024 764 L1282 764 Q1290 764 1290 756 L1290 717', stroke:'#123d78', 'stroke-width':6, fill:'none'}, A);
+E('path', {d:'M1016 318 L1016 756 Q1016 764 1024 764 L1282 764 Q1290 764 1290 756 L1290 717', stroke:'#2c63b8', 'stroke-width':4, fill:'none'}, A);
+T(1246, 798, '24 V module supply (pre-wired)', {'font-size':9, fill:'#4f5b66', 'text-anchor':'middle'}, A);
+// shield bar labels
+T(1067, 852, 'cable shield earth bar', {'font-size':9.5, fill:'#4f5b66', 'text-anchor':'middle'}, A);
+T(1067, 916, '⏚ to cabinet earth', {'font-size':9, fill:'#4f5b66', 'text-anchor':'middle'}, A);
+gland(1240, 992, 0, A);
+
+/* ---------- HMI */
+(function(){
+  const g = E('g', {filter:'url(#sh)'}, A);
+  E('rect', {x:1362, y:44, width:222, height:404, rx:12, fill:'#22272d', stroke:'#0d0f12'}, g);
+  E('rect', {x:1373, y:60, width:200, height:364, rx:3, fill:'url(#gScreen)'}, g);
+})();
+T(1473, 440, 'RotorWise', {'font-size':8, fill:'#7f8b96', 'text-anchor':'middle'}, A);
+T(1473, 470, 'Operator HMI (control room)', {'font-size':10, fill:'#3f4a55', 'text-anchor':'middle'}, A);
+const H = E('g', {}, A);
+/* ---------- watch table + settings boxes */
+E('rect', {x:1362, y:486, width:222, height:270, rx:8, fill:'#1d2228', stroke:'#0d0f12', filter:'url(#sh)'}, A);
+T(1374, 506, 'PLC WATCH TABLE · CPU', {'font-size':9.5, fill:'#2bb3a8', 'letter-spacing':1.4, 'font-weight':600}, A);
+const W = E('g', {}, A);
+E('rect', {x:1362, y:770, width:222, height:222, rx:8, fill:'#eef1f3', stroke:'#9aa4ae'}, A);
+const S = E('g', {}, A);
+
+/* ---------- test kit panel */
+E('rect', {x:18, y:478, width:672, height:546, rx:12, fill:'#e9edf0', stroke:'#b6bfc7'}, A);
+T(34, 502, 'TEST KIT', {fill:'#5b6773', 'font-size':11, 'letter-spacing':2, 'font-weight':600}, A);
+const tkHelp = T(120, 502, '', {fill:'#5b6773', 'font-size':11}, A);
+const TK = E('g', {}, A);
+
+/* ============================================================ connection points */
+const PTS = {};
+function pt(id, x, y, label, zone, ap, kind){ PTS[id] = {id, x, y, label, zone, ap, kind:kind||'screw'}; }
+pt('PT+', 228, 334, 'PT-101 terminal +', 'pt', [0,1]);
+pt('PT-', 272, 334, 'PT-101 terminal PWR/COMM −', 'pt', [0,1]);
+pt('PTT', 316, 334, 'PT-101 TEST terminal', 'pt', [0,1]);
+pt('PTG', 238, 290, 'PT-101 internal ground screw', 'pt', [0.3,1]);
+const TTC = [480, 330];
+for(let i=0;i<6;i++){ const a = (204+26.4*i)*Math.PI/180, x = TTC[0]+44*Math.cos(a), y = TTC[1]+44*Math.sin(a); T(TTC[0]+57*Math.cos(a), TTC[1]+57*Math.sin(a)+3.5, String(i+1), {'font-size':9.5, fill:'#30363b', 'text-anchor':'middle', 'font-weight':700}, A); pt('TT'+(i+1), x, y, 'TT-101 sensor terminal '+(i+1), 'tt', [(TTC[0]-x)/44, (TTC[1]-y)/44]); }
+pt('TT+', 513, 368, 'TT-101 terminal +', 'tt', [1,0.6]); T(500, 384, '+', {'font-size':12, fill:'#30363b', 'text-anchor':'middle', 'font-weight':700}, A); T(531, 333, '−', {'font-size':12, fill:'#30363b', 'text-anchor':'middle', 'font-weight':700}, A);
+pt('TT-', 530, 346, 'TT-101 terminal −', 'tt', [1,0]);
+JBT.forEach((n,i)=>{ const x = 746+i*22, lab = n[0]==='S' ? 'S ('+(n==='S1'?'1st':'2nd')+' shield terminal)' : n;
+  pt('JB'+n+'t', x, 390, 'JB-1 terminal '+lab+' (field side)', 'jb', [0,-1]);
+  pt('JB'+n+'b', x, 460, 'JB-1 terminal '+lab+' (home-run side)', 'jb', [0,1]); });
+for(let n=1;n<=40;n++){ const [x,y] = aiXY(n); pt('AI'+n, x, y, 'AI card terminal '+n+(AIFN[n]?' ('+AIFN[n]+')':''), 'cab', n<=20?[1,0]:[-1,0], 'push'); }
+for(let i=0;i<4;i++) pt('SB'+(i+1), 1010+i*38, 868, 'shield earth bar clamp '+(i+1), 'cab', [0,1]);
+
+/* draw the screws for points (except push-in) */
+for(const id in PTS){ const p = PTS[id]; if(p.kind==='screw') screw(p.x, p.y, id.startsWith('JB')||id.startsWith('SB')?5.2:(id.startsWith('TT')?6:7.2), L.pts, id==='PTG'); }
+// ground screw marker colour
+const ptsHit = {};
+for(const id in PTS){ const p = PTS[id];
+  const g = E('g', {class:'tgt'}, L.pts);
+  E('circle', {cx:p.x, cy:p.y, r:11, fill:'#2bb3a8', class:'hl', opacity:0}, g);
+  E('circle', {cx:p.x, cy:p.y, r:12, fill:'transparent'}, g);
+  const t = E('title', {}, g); t.textContent = p.label;
+  g.addEventListener('pointerdown', ev => { ev.stopPropagation(); onPoint(id, ev); });
+  ptsHit[id] = g;
+}
+
+/* ============================================================ conductors */
+const COL = {red:'#c8322b', blk:'#1e2124', wht:'#f3f3ee', drn:'#c4c9ce'};
+const COND = {}, ENDS = {};
+function cond(id, cable, name, col){ COND[id] = {id, cable, name, col}; }
+function endp(id, c, zone, root, dir, park){ ENDS[id] = {id, cond:c, zone, root, dir, park, land:null, drag:null}; }
+cond('C1r','PT-101 field cable','red core','red'); cond('C1k','PT-101 field cable','black core','blk'); cond('C1d','PT-101 field cable','drain wire (shield)','drn');
+cond('C2r','TT-101 field cable','red core','red'); cond('C2k','TT-101 field cable','black core','blk'); cond('C2d','TT-101 field cable','drain wire (shield)','drn');
+cond('C3p1w','home-run cable','pair 1 white','wht'); cond('C3p1k','home-run cable','pair 1 black','blk');
+cond('C3p2w','home-run cable','pair 2 white','wht'); cond('C3p2k','home-run cable','pair 2 black','blk'); cond('C3d','home-run cable','drain wire (overall shield)','drn');
+cond('RA1','Pt100','red lead (end A)','red'); cond('RA2','Pt100','red lead (end A)','red'); cond('RB1','Pt100','white lead (end B)','wht'); cond('RB2','Pt100','white lead (end B)','wht');
+// PT end of C1
+endp('C1r.a','C1r','pt',[272,408],[0,-1],[244,384]); endp('C1k.a','C1k','pt',[272,408],[0,-1],[262,388]); endp('C1d.a','C1d','pt',[272,408],[0,-1],[300,386]);
+// JB end of C1
+endp('C1r.b','C1r','jb',[765,222],[0,1],[748,296]); endp('C1k.b','C1k','jb',[765,222],[0,1],[765,304]); endp('C1d.b','C1d','jb',[765,222],[0,1],[782,296]);
+// TT end of C2
+endp('C2r.a','C2r','tt',[558,336],[-1,0],[545,288]); endp('C2k.a','C2k','tt',[558,336],[-1,0],[553,301]); endp('C2d.a','C2d','tt',[558,336],[-1,0],[556,316]);
+// JB end of C2
+endp('C2r.b','C2r','jb',[877,222],[0,1],[860,296]); endp('C2k.b','C2k','jb',[877,222],[0,1],[877,304]); endp('C2d.b','C2d','jb',[877,222],[0,1],[894,296]);
+// JB end of C3
+[['C3p1w',786],['C3p1k',803],['C3p2w',823],['C3p2k',843],['C3d',860]].forEach(([c,x],i)=> endp(c+'.a', c, 'jb', [823,640], [0,-1], [x, 566+(i===2?6:(i%2?3:0))]));
+// cabinet end of C3
+[['C3p1w',1202],['C3p1k',1221],['C3p2w',1240],['C3p2k',1259],['C3d',1278]].forEach(([c,x],i)=> endp(c+'.b', c, 'cab', [1240,978], [0,-1], [x, 918+(i===2?-6:(i%2?-3:0))]));
+// Pt100 leads (one free end each; other end is the element)
+[['RA1',444,372],['RA2',454,384],['RB1',468,392],['RB2',482,394]].forEach(([c,x,y])=> endp(c, c, 'tt', [480,338], [-0.35,1], [x,y]));
+
+const SOLUTION = {
+  'C1r.a':'PT+', 'C1k.a':'PT-',
+  'C1r.b':'JB1t', 'C1k.b':'JB2t', 'C1d.b':'JBS1t',
+  'C2r.a':'TT+', 'C2k.a':'TT-',
+  'C2r.b':'JB3t', 'C2k.b':'JB4t', 'C2d.b':'JBS2t',
+  'C3p1w.a':'JB1b', 'C3p1k.a':'JB2b', 'C3p2w.a':'JB3b', 'C3p2k.a':'JB4b', 'C3d.a':'JBS1b',
+  'C3p1w.b':'AI1', 'C3p1k.b':'AI2', 'C3p2w.b':'AI4', 'C3p2k.b':'AI5', 'C3d.b':'SB1',
+  'RA1':'TT1', 'RA2':'TT2', 'RB1':'TT3', 'RB2':'TT4'
+};
+
+/* cable jackets (static) */
+function jacket(d, col){ E('path', {d, stroke:'#0c0e10', 'stroke-width':15, fill:'none', 'stroke-linecap':'round', 'stroke-linejoin':'round'}, L.jackets);
+  E('path', {d, stroke:col, 'stroke-width':12, fill:'none', 'stroke-linecap':'round', 'stroke-linejoin':'round'}, L.jackets);
+  E('path', {d, stroke:'#ffffff', 'stroke-width':2, fill:'none', opacity:.18, transform:'translate(-2 -2)'}, L.jackets); }
+jacket('M272 440 L272 462 Q272 470 280 470 L632 470 Q640 470 640 462 L640 186 Q640 178 648 178 L757 178 Q765 178 765 186 L765 192', '#2b3036');
+jacket('M594 336 L610 336 Q618 336 618 328 L618 166 Q618 158 626 158 L869 158 Q877 158 877 166 L877 192', '#2b3036');
+jacket('M823 666 L823 1006 Q823 1016 833 1016 L1230 1016 Q1240 1016 1240 1006 L1240 1004', '#2a3a4a');
+T(612, 462, 'cable PT-101', {'font-size':9, fill:'#4e5a65', 'text-anchor':'end'}, A);
+T(626, 152, 'cable TT-101 · 1 pair + drain', {'font-size':9, fill:'#4e5a65'}, A);
+T(860, 1010, 'home-run cable · 2 numbered pairs + overall drain', {'font-size':9, fill:'#4e5a65'}, A);
+
+/* ============================================================ state */
+const ST = { power:false, mode:'wire', p:4.2, t:65, ptFail:false, ptAl:'H', ttFail:false, ttAl:'H', wbd:true, wbl:1.185,
+  prog:{PT:{lo:0,hi:10}, TT:{lo:0,hi:150}}, sel:null, probes:{r:null, k:null, next:'r'}, clampOn:null, polChecked:false, fault:null };
+
+/* ============================================================ network */
+function buildNet(){
+  const par = {};
+  const f = x => { if(par[x]===undefined) par[x]=x; while(par[x]!==x){ par[x]=par[par[x]]; x=par[x]; } return x; };
+  const u = (a,b) => { const ra=f(a), rb=f(b); if(ra!==rb) par[ra]=rb; };
+  for(const id in PTS) f(id);
+  for(const c in COND) f(c);
+  for(const id in ENDS){ const e = ENDS[id]; if(e.land) u(e.cond, e.land); }
+  JBT.forEach(n => u('JB'+n+'t', 'JB'+n+'b'));
+  u('JBS1t','JBS2t');
+  u('RA1','RA2'); u('RB1','RB2');
+  for(let i=1;i<=4;i++) u('SB'+i, 'EARTH');
+  u('PTG','EARTH');
+  const mem = {};
+  const all = Object.keys(PTS).concat(Object.keys(COND)).concat(['EARTH']);
+  all.forEach(x => { const r = f(x); (mem[r] = mem[r] || []).push(x); });
+  return {f, mem};
+}
+const CH2W = [[1,2],[4,5],[8,9],[12,13],[21,22],[24,25],[28,29],[32,33]];
+const TX = { PT:{p:'PT+', m:'PT-', name:'PT-101'}, TT:{p:'TT+', m:'TT-', name:'TT-101'} };
+
+function rtdState(){
+  const ln = k => ENDS[k].land;
+  const num = id => id && /^TT\d$/.test(id) ? +id.slice(2) : (id ? id : null);
+  const A = [num(ln('RA1')), num(ln('RA2'))], B = [num(ln('RB1')), num(ln('RB2'))];
+  const onPwr = [ln('RA1'),ln('RA2'),ln('RB1'),ln('RB2')].some(x => x==='TT+'||x==='TT-');
+  const pwrOnSensor = ['C2r.a','C2k.a','C2d.a'].some(k => ln(k) && /^TT\d$/.test(ln(k)));
+  const set = a => a.filter(x=>x!==null).sort().join(',');
+  const ok = (set(A)==='1,2' && set(B)==='3,4') || (set(A)==='3,4' && set(B)==='1,2');
+  const swappedEnds = set(A)==='3,4' && set(B)==='1,2';
+  const missing = [ln('RA1'),ln('RA2'),ln('RB1'),ln('RB2')].filter(x=>!x).length;
+  return {ok, swappedEnds, onPwr, pwrOnSensor, missing, A, B};
+}
+
+function evaluate(){
+  const net = buildNet(), f = net.f;
+  const res = { net, ch:[], tx:{}, issues:[] };
+  const chNodes = CH2W.map(([u,i]) => ({u:f('AI'+u), i:f('AI'+i)}));
+  const earth = f('EARTH');
+  const rtd = rtdState();
+  for(const k in TX){
+    const t = TX[k], np = f(t.p), nm = f(t.m);
+    const o = {k, np, nm, ch:-1, rev:-1, crossed:false, shorted:np===nm, test:false, earth:np===earth||nm===earth};
+    chNodes.forEach((c,n) => { if(c.u===np && c.i===nm && c.u!==c.i) o.ch = n; if(c.u===nm && c.i===np && c.u!==c.i) o.rev = n; });
+    if(o.ch<0 && o.rev<0){
+      const onU = chNodes.findIndex(c => c.u===np || c.u===nm), onI = chNodes.findIndex(c => c.i===np || c.i===nm);
+      if(onU>=0 && onI>=0 && onU!==onI) o.crossed = true;
+      o.onU = onU; o.onI = onI;
+    }
+    if(k==='PT'){ const nt = f('PTT'), wired = (net.mem[nt]||[]).length>1; o.test = wired && (chNodes.some(c => c.u===nt || c.i===nt) || nt===np || nt===nm); o.testNode = nt; }
+    res.tx[k] = o;
+  }
+  // transmitter output currents (if it is supplied the right way round)
+  const pt = res.tx.PT, tt = res.tx.TT;
+  function ptOut(){ if(ST.ptFail) return ST.ptAl==='H'?F.alHi:F.alLo; return clamp(4+16*(ST.p-0)/10, F.ptSatLo, F.ptSatHi); }
+  function ttOut(){ if(!rtd.ok || ST.ttFail || rtd.onPwr) return ST.ttAl==='H'?F.alHi:F.alLo; return clamp(4+16*(ST.t-0)/150, F.ttSatLo, F.ttSatHi); }
+  for(let n=0;n<8;n++){
+    const c = chNodes[n];
+    const r = {n, I:0, state:'idle', note:'', shorted:c.u===c.i, earth:c.u===earth||c.i===earth, test:false, users:[]};
+    ['PT','TT'].forEach(k => { const o = res.tx[k]; if(o.ch===n) r.users.push(k); });
+    if(pt.test && (c.u===pt.testNode || c.i===pt.testNode)) r.test = true;
+    const touched = (res.net.mem[c.u]||[]).length>1 || (res.net.mem[c.i]||[]).length>1;
+    if(!ST.power){ r.I = 0; r.state = touched?'off':'idle'; }
+    else if(r.test){ r.I = NaN; r.state = 'test'; }
+    else if(r.earth){ r.I = NaN; r.state = 'earth'; }
+    else if(r.shorted){ r.I = Infinity; r.state = 'short'; }
+    else if(r.users.length>1){ r.I = NaN; r.state = 'multi'; }
+    else if(r.users.length===1){ const k = r.users[0], o = res.tx[k];
+      if(o.shorted){ r.I = Infinity; r.state = 'short'; }
+      else { r.I = k==='PT'?ptOut():ttOut(); r.state = 'loop'; r.tx = k; } }
+    else { r.I = 0; r.state = touched?'open':'idle'; }
+    // card value (Table C-8)
+    const I = r.I;
+    if(r.state==='idle'){ r.raw = null; }
+    else if(isNaN(I)) r.raw = NaN;
+    else if(I===Infinity) r.raw = 32767;
+    else if(I > F.mAOverTop) r.raw = 32767;
+    else if(I < F.mAUnderBot) r.raw = -32768;
+    else r.raw = Math.round(clamp((I-4)/16*F.rawTop, F.rawUnderBot, F.rawOverTop));
+    r.wb = ST.power && ST.wbd && r.state!=='idle' && !isNaN(I) && I < ST.wbl && n<2;
+    res.ch.push(r);
+  }
+  res.rtd = rtd;
+  return res;
+}
+
+/* ============================================================ wire drawing */
+function curve(a, da, b, db){ const d = Math.hypot(b[0]-a[0], b[1]-a[1]); const l1 = Math.min(70, d*.45), l2 = Math.min(55, d*.45);
+  return `M${a[0]} ${a[1]} C${a[0]+da[0]*l1} ${a[1]+da[1]*l1} ${b[0]+db[0]*l2} ${b[1]+db[1]*l2} ${b[0]} ${b[1]}`; }
+const wireEls = {};
+const LANEOFF = {'C3p1w.b':-3,'C3p1k.b':-1,'C3p2w.b':1,'C3p2k.b':3,'C3d.b':0};
+function laneP(e, b){ const n = +e.land.slice(2), left = n<=20, lx = 1251 + (LANEOFF[e.id]||0) + (left?-3:3), r = e.root, tx = b[0] + (left?12:-12);
+  return `M${r[0]} ${r[1]} C${r[0]} ${r[1]-60} ${lx} ${r[1]-50} ${lx} ${r[1]-120} L${lx} ${b[1]+16} Q${lx} ${b[1]} ${tx} ${b[1]} L${b[0]} ${b[1]}`; }
+function tipPos(e){ if(e.drag) return e.drag; if(e.land){ const p = PTS[e.land]; return [p.x, p.y]; } return e.park; }
+function tipAp(e){ if(e.drag) return [0,1]; if(e.land){ return PTS[e.land].ap; } return [0,1]; }
+function drawWires(res){
+  L.wires.innerHTML = ''; L.tips.innerHTML = '';
+  for(const id in ENDS){
+    const e = ENDS[id], c = COND[e.cond], col = COL[c.col];
+    const b = tipPos(e), d = (e.land && /^AI/.test(e.land) && !e.drag) ? laneP(e, b) : curve(e.root, e.dir, b, tipAp(e));
+    const g = E('g', {}, L.wires);
+    const drain = c.col==='drn';
+    const live = res && liveCond(res, e.cond);
+    if(ST.sel===id) E('path', {d, stroke:'#2bb3a8', 'stroke-width':13, fill:'none', opacity:.55, 'stroke-linecap':'round'}, g);
+    if(live) E('path', {d, stroke:'#ffd46a', 'stroke-width':11, fill:'none', opacity:.45, 'stroke-linecap':'round', filter:'url(#glow)'}, g);
+    E('path', {d, stroke:drain?'#5d646b':'#0b0c0d', 'stroke-width':drain?4.4:7.4, fill:'none', 'stroke-linecap':'round'}, g);
+    E('path', {d, stroke:col, 'stroke-width':drain?2.6:5.2, fill:'none', 'stroke-linecap':'round'}, g);
+    if(!drain) E('path', {d, stroke:'#ffffff', 'stroke-width':1.2, fill:'none', opacity:c.col==='wht'?.0:.28, transform:'translate(-1.2 -1.2)'}, g);
+    const hit = E('path', {d, stroke:'transparent', 'stroke-width':16, fill:'none', class:'tgt'}, g);
+    hit.addEventListener('pointerdown', ev => { if(ST.mode==='clamp'){ ev.stopPropagation(); ST.clampOn = id; refresh(); } });
+    // tip: stripped end / ferrule
+    const tg = E('g', {class:'tip'}, L.tips);
+    const ang = Math.atan2(-tipAp(e)[1], -tipAp(e)[0])*180/Math.PI;
+    const tgi = E('g', {transform:`translate(${b[0]} ${b[1]}) rotate(${ang+180})`}, tg);
+    if(e.land){ E('rect', {x:-2, y:-3, width:10, height:6, rx:1.5, fill:drain?'#e6c34c':'#c6ccd2', stroke:'#4a5056', 'stroke-width':.7}, tgi); }
+    else { E('rect', {x:-1, y:-2.3, width:9, height:4.6, rx:1, fill:'url(#gCopper)', stroke:'#7a4a1a', 'stroke-width':.5}, tgi); }
+    const lp = e.land ? [b[0]+tipAp(e)[0]*17, b[1]+tipAp(e)[1]*17-6] : [b[0], b[1]+18];
+    if(c.cable==='home-run cable' && !drain) T(lp[0], lp[1], c.name.includes('1')?'1':'2', {'font-size':8.5, fill:'#1d2228', 'text-anchor':'middle', 'font-weight':700, 'paint-order':'stroke', stroke:'#ffffff', 'stroke-width':2.5}, tg);
+    E('circle', {cx:b[0], cy:b[1], r:10, fill:'transparent'}, tg);
+    if(ST.sel===id) E('circle', {cx:b[0], cy:b[1], r:9, fill:'none', stroke:'#2bb3a8', 'stroke-width':2.5}, tg);
+    const tt = E('title', {}, tg); tt.textContent = `${c.cable}: ${c.name}`;
+    tg.addEventListener('pointerdown', ev => onTipDown(id, ev));
+    wireEls[id] = {g, d};
+  }
+}
+function liveCond(res, cid){
+  if(!ST.power) return false;
+  const n = res.net.f(cid);
+  return res.ch.some((r,i) => r.state==='loop' && r.I>0 && (res.net.f('AI'+CH2W[i][0])===n || res.net.f('AI'+CH2W[i][1])===n));
+}
+
+/* ============================================================ interaction */
+let drag = null, pan = null;
+function svgPt(ev){ const p = sv.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const m = sv.getScreenCTM().inverse(); const q = p.matrixTransform(m); return [q.x, q.y]; }
+function occupant(pid){ for(const id in ENDS) if(ENDS[id].land===pid) return id; return null; }
+function land(eid, pid){
+  const e = ENDS[eid], p = PTS[pid];
+  if(!p) return false;
+  if(p.zone!==e.zone){ toast('That core can’t reach there — this end of the cable is at '+zoneName(e.zone)+'.'); return false; }
+  const occ = occupant(pid);
+  if(occ && occ!==eid){ toast('That terminal already has a wire. One wire per terminal here — take the other one out first.'); return false; }
+  e.land = pid; ST.polChecked = false; return true;
+}
+function zoneName(z){ return {pt:'the pressure transmitter', tt:'the temperature transmitter head', jb:'junction box JB-1', cab:'the cabinet'}[z]; }
+function nearestPoint(xy, zone){ let best=null, bd=1e9; for(const id in PTS){ const p = PTS[id]; if(zone && p.zone!==zone) continue; const d = Math.hypot(p.x-xy[0], p.y-xy[1]); if(d<bd){bd=d;best=id;} } return bd<20?best:null; }
+function onTipDown(id, ev){
+  ev.stopPropagation();
+  if(ST.mode==='clamp'){ ST.clampOn = id; refresh(); return; }
+  if(ST.mode==='ohm' || ST.mode==='pol'){ probe(ENDS[id].land || ENDS[id].cond, id); return; }
+  drag = {id, x0:ev.clientX, y0:ev.clientY, moved:false, pid:ev.pointerId};
+  try{ sv.setPointerCapture(ev.pointerId); }catch(e){}
+}
+function onPoint(pid, ev){
+  if(ST.mode==='ohm' || ST.mode==='pol'){ probe(pid, pid); return; }
+  if(ST.mode==='clamp'){ const o = occupant(pid); if(o){ ST.clampOn = o; refresh(); } return; }
+  if(ST.sel){ const s = ST.sel; if(land(s, pid)) { ST.sel = null; } refresh(); return; }
+  const o = occupant(pid); if(o){ ST.sel = o; refresh(); toast('Core selected — tap another terminal to move it, or drag it away to take it out.'); }
+}
+const touches = new Map(); let pinch = null;
+sv.addEventListener('pointerdown', ev => { touches.set(ev.pointerId, [ev.clientX, ev.clientY]);
+  if(touches.size===2 && !drag){ const [a,b] = [...touches.values()]; pinch = {d:Math.hypot(a[0]-b[0], a[1]-b[1]), vb:VB.slice()}; pan = null; return; } }, true);
+sv.addEventListener('pointermove', ev => { if(!touches.has(ev.pointerId)) return; touches.set(ev.pointerId, [ev.clientX, ev.clientY]);
+  if(pinch && touches.size===2){ const [a,b] = [...touches.values()]; const d = Math.hypot(a[0]-b[0], a[1]-b[1]); if(d>10){ const k = pinch.d/d; VB.splice(0,4,...pinch.vb); const m = [(a[0]+b[0])/2,(a[1]+b[1])/2]; const q = svgPt({clientX:m[0], clientY:m[1]}); zoom(k, q[0], q[1]); } ev.stopImmediatePropagation(); } }, true);
+['pointerup','pointercancel'].forEach(t => sv.addEventListener(t, ev => { touches.delete(ev.pointerId); if(touches.size<2) pinch = null; }, true));
+sv.addEventListener('pointerdown', ev => {
+  if(drag || pinch) return;
+  pan = {x:ev.clientX, y:ev.clientY, vb:VB.slice()}; try{ sv.setPointerCapture(ev.pointerId); }catch(e){}
+  if(ST.sel){ ST.sel = null; refresh(); }
+});
+sv.addEventListener('pointermove', ev => {
+  if(drag){ const d = Math.hypot(ev.clientX-drag.x0, ev.clientY-drag.y0); if(d>5) drag.moved = true;
+    if(drag.moved){ const e = ENDS[drag.id]; e.drag = svgPt(ev); const np = nearestPoint(e.drag, e.zone); hoverPt(np); drawWires(LAST); } return; }
+  if(pan){ const k = VB[2]/sv.clientWidth; const dx = (ev.clientX-pan.x)*k, dy = (ev.clientY-pan.y)*k; VB[0] = pan.vb[0]-dx; VB[1] = pan.vb[1]-dy; setVB(); }
+});
+sv.addEventListener('pointerup', ev => {
+  if(drag){ const e = ENDS[drag.id];
+    if(drag.moved){ const np = nearestPoint(e.drag, e.zone); e.drag = null; hoverPt(null);
+      if(np){ const was = e.land; e.land = null; if(!land(drag.id, np)) e.land = was; }
+      else { if(e.land) toast('Core taken out of the terminal.'); e.land = null; ST.polChecked = false; }
+      ST.sel = null; }
+    else { ST.sel = ST.sel===drag.id ? null : drag.id; if(ST.sel) toast('Core end selected — now tap the terminal.'); }
+    drag = null; refresh(); return; }
+  pan = null;
+});
+let hovered = null;
+function hoverPt(id){ if(hovered && ptsHit[hovered]) ptsHit[hovered].querySelector('.hl').setAttribute('opacity', 0); hovered = id; if(id) ptsHit[id].querySelector('.hl').setAttribute('opacity', .75); }
+document.addEventListener('keydown', ev => { if(ev.key==='Escape'){ ST.sel = null; refresh(); } });
+
+/* zoom / pan */
+const VB = [0,0,1600,1040];
+function setVB(){ sv.setAttribute('viewBox', VB.join(' ')); }
+function zoom(k, cx, cy){ const nw = clamp(VB[2]*k, 300, 2400), nh = nw*1040/1600; if(cx===undefined){ cx = VB[0]+VB[2]/2; cy = VB[1]+VB[3]/2; }
+  VB[0] = cx-(cx-VB[0])*nw/VB[2]; VB[1] = cy-(cy-VB[1])*nh/VB[3]; VB[2] = nw; VB[3] = nh; setVB(); }
+sv.addEventListener('wheel', ev => { ev.preventDefault(); const [x,y] = svgPt(ev); zoom(ev.deltaY>0?1.12:1/1.12, x, y); }, {passive:false});
+$('zin').onclick = () => zoom(1/1.25); $('zout').onclick = () => zoom(1.25);
+$('zfit').onclick = () => { VB.splice(0,4,0,0,1600,1040); setVB(); };
+
+/* ============================================================ test tools */
+function probe(target, label){
+  const P = ST.probes;
+  if(P.next==='r'){ P.r = target; P.rl = label; P.next = 'k'; } else { P.k = target; P.kl = label; P.next = 'r'; }
+  refresh();
+}
+function nodeOf(res, t){ return t ? res.net.f(t) : null; }
+function rtdR(){ return F.pt100R0*(1+F.pt100A*ST.t); }
+function measure(res){
+  const P = ST.probes, out = {};
+  const a = nodeOf(res, P.r), b = nodeOf(res, P.k);
+  if(ST.mode==='ohm'){
+    if(!P.r || !P.k){ out.txt = '— — —'; out.sub = 'place both probes'; return out; }
+    if(ST.power){ out.txt = 'OFF!'; out.sub = 'switch the power off before measuring ohms'; out.bad = true; return out; }
+    const ra = res.net.f('RA1'), rb = res.net.f('RB1');
+    if(a===b){ out.txt = '0.0 Ω'; out.sub = 'continuity — same conductor'; out.beep = true; return out; }
+    if((a===ra && b===rb) || (a===rb && b===ra)){ const R = rtdR(); out.txt = R.toFixed(1)+' Ω'; out.sub = 'through the Pt100 element (≈ 100 Ω × (1 + 0.00385 × T))'; return out; }
+    out.txt = 'OL'; out.sub = 'open — not connected'; return out;
+  }
+  if(ST.mode==='pol'){
+    if(!P.r || !P.k){ out.led = null; out.sub = 'place both probes'; return out; }
+    if(!ST.power){ out.led = null; out.sub = 'no voltage (power is off)'; return out; }
+    let sgn = 0;
+    res.ch.forEach((r,n) => { if(n>1 || r.state==='test' || r.state==='earth' || r.state==='short') return;
+      const u = res.net.f('AI'+CH2W[n][0]), i = res.net.f('AI'+CH2W[n][1]);
+      if(a===u && b===i) sgn = 1; if(a===i && b===u) sgn = -1; });
+    out.led = sgn>0?'g':(sgn<0?'r':null);
+    out.sub = sgn>0 ? 'red probe is on the + side ✔' : (sgn<0 ? 'reversed: the black probe is on the + side' : 'no voltage between these two points');
+    if(sgn!==0 && P.rl && P.kl){ const s = new Set([P.rl, P.kl]); if((s.has('PT+')&&s.has('PT-')) || (s.has('TT+')&&s.has('TT-'))) ST.polChecked = ST.polChecked || sgn>0; }
+    return out;
+  }
+  if(ST.mode==='clamp'){
+    if(!ST.clampOn){ out.txt = '—.— mA'; out.sub = 'tap a core to clamp it'; return out; }
+    const e = ENDS[ST.clampOn], c = COND[e.cond];
+    out.sub = c.cable+': '+c.name;
+    if(!ST.power){ out.txt = '0.00 mA'; return out; }
+    const n = res.net.f(e.cond); let I = 0, unk = false;
+    res.ch.forEach((r,k) => { const u = res.net.f('AI'+CH2W[k][0]), i = res.net.f('AI'+CH2W[k][1]);
+      if(n===u || n===i){ if(r.state==='loop') I = r.I; else if(r.state==='short') unk = true; else if(isNaN(r.I)) unk = true; } });
+    out.txt = unk ? '?? mA' : I.toFixed(2)+' mA'; if(unk) out.sub += ' — not modelled'; return out;
+  }
+  return out;
+}
+
+/* ============================================================ HMI, watch table, settings drawing */
+function fmtRaw(r){ if(r===null) return '—'; if(isNaN(r)) return '?'; return String(r); }
+function hex(r){ if(r===null || isNaN(r)) return ''; return ((r & 0xFFFF).toString(16).toUpperCase().padStart(4,'0'))+'H'; }
+function quality(res, n){
+  const r = res.ch[n];
+  if(!ST.power) return {bad:true, why:'no power'};
+  if(r.state==='idle' || r.state==='off') return {bad:true, why:'not wired'};
+  if(r.state==='test') return {bad:true, why:'loop on TEST terminal'};
+  if(r.state==='earth') return {bad:true, why:'earth fault'};
+  if(r.state==='multi') return {bad:true, why:'2 transmitters on 1 channel'};
+  if(r.wb) return {bad:true, why:'WIRE BREAK (card diag)'};
+  if(r.raw===32767) return {bad:true, why:'overflow 7FFF'};
+  if(r.raw===-32768) return {bad:true, why:'underflow 8000'};
+  if(r.I < 3.8) return {bad:true, why:'below 3.8 mA (program check)'};
+  if(r.I > 21.0) return {bad:true, why:'above 21 mA (program check)'};
+  return {bad:false, why:'OK'};
+}
+function scaled(n, raw){ const pr = n===0?ST.prog.PT:ST.prog.TT; return raw/F.rawTop*(pr.hi-pr.lo)+pr.lo; }
+function drawHMI(res){
+  H.innerHTML = '';
+  E('rect', {x:1373, y:60, width:200, height:22, fill:'#3a424c'}, H);
+  T(1381, 75, 'UCP-101 · PUMP P-101', {'font-size':10, fill:'#fff', 'font-weight':600}, H);
+  if(!ST.power){ T(1473, 240, 'NO CONNECTION', {'font-size':13, fill:'#a33', 'text-anchor':'middle', 'font-weight':700}, H); T(1473, 258, 'TO PLC', {'font-size':13, fill:'#a33', 'text-anchor':'middle', 'font-weight':700}, H); return; }
+  [[0,'PT-101','DISCHARGE PRESSURE','bar',ST.prog.PT,2],[1,'TT-101','DISCHARGE TEMPERATURE','°C',ST.prog.TT,1]].forEach(([n,tag,desc,unit,pr,dp],i) => {
+    const y0 = 94+i*164, r = res.ch[n], q = quality(res, n);
+    E('rect', {x:1381, y:y0, width:184, height:150, rx:4, fill:'#f7f8f9', stroke:q.bad?'#d23b30':'#b9c1c8', 'stroke-width':q.bad?2:1}, H);
+    T(1389, y0+17, tag, {'font-size':12, fill:'#1d2228', 'font-weight':700}, H);
+    T(1389, y0+31, desc, {'font-size':8.5, fill:'#5b6773', 'letter-spacing':.6}, H);
+    const v = (r.raw===null || isNaN(r.raw)) ? null : scaled(n, r.raw);
+    const vt = v===null ? '----' : v.toFixed(dp);
+    T(1530, y0+72, q.bad ? (r.raw===null||isNaN(r.raw)?'----':vt) : vt, {'font-size':28, fill:q.bad?'#9aa3ac':'#1d2228', 'text-anchor':'end', class:'mono', 'font-weight':700}, H);
+    T(1536, y0+72, unit, {'font-size':12, fill:'#5b6773'}, H);
+    const frac = v===null ? 0 : clamp((v-pr.lo)/(pr.hi-pr.lo||1), 0, 1);
+    E('rect', {x:1389, y:y0+86, width:168, height:12, rx:2, fill:'#dfe3e7', stroke:'#b9c1c8'}, H);
+    E('rect', {x:1389, y:y0+86, width:168*frac, height:12, rx:2, fill:q.bad?'#c7ccd1':'#2bb3a8'}, H);
+    T(1389, y0+111, String(pr.lo), {'font-size':8.5, fill:'#5b6773'}, H); T(1557, y0+111, String(pr.hi), {'font-size':8.5, fill:'#5b6773', 'text-anchor':'end'}, H);
+    if(q.bad){ E('rect', {x:1389, y:y0+118, width:168, height:22, rx:3, fill:'#d23b30', class:'blink'}, H); T(1473, y0+133, 'BAD · '+q.why, {'font-size':9.5, fill:'#fff', 'text-anchor':'middle', 'font-weight':700}, H); }
+    else { E('rect', {x:1389, y:y0+118, width:168, height:22, rx:3, fill:'#e3f4ec'}, H); T(1473, y0+133, 'quality GOOD', {'font-size':9.5, fill:'#1d7a4a', 'text-anchor':'middle', 'font-weight':700}, H); }
+  });
+}
+function drawWatch(res){
+  W.innerHTML = '';
+  const hdr = ['CH','mA','raw','hex','value'], xs = [1374,1400,1448,1498,1576];
+  hdr.forEach((h,i)=>T(xs[i], 528, h, {'font-size':9, fill:'#8a96a2', 'text-anchor':i===4?'end':'start'}, W));
+  E('line', {x1:1372, y1:534, x2:1576, y2:534, stroke:'#39424c'}, W);
+  [0,1].forEach(n => {
+    const r = res.ch[n], y = 556+n*78, q = quality(res, n);
+    const tag = n===0?'PT-101':'TT-101';
+    T(1374, y, String(n), {'font-size':12, fill:'#e8ecf0', class:'mono'}, W);
+    const It = !ST.power || r.state==='idle' ? '0.00' : (isNaN(r.I)?'?':(r.I===Infinity?'>22.8':r.I.toFixed(2)));
+    T(1400, y, It, {'font-size':12, fill:'#ffd46a', class:'mono'}, W);
+    T(1448, y, ST.power?fmtRaw(r.raw):'—', {'font-size':12, fill:'#7fd6cc', class:'mono'}, W);
+    T(1498, y, ST.power?hex(r.raw):'', {'font-size':10, fill:'#7fd6cc', class:'mono'}, W);
+    const v = (!ST.power || r.raw===null || isNaN(r.raw)) ? '—' : scaled(n, r.raw).toFixed(n===0?2:1);
+    T(1576, y, v, {'font-size':12, fill:'#e8ecf0', class:'mono', 'text-anchor':'end'}, W);
+    T(1374, y+18, tag+(n===0?' · '+ST.prog.PT.lo+'-'+ST.prog.PT.hi+' bar':' · '+ST.prog.TT.lo+'-'+ST.prog.TT.hi+' °C'), {'font-size':9, fill:'#8a96a2'}, W);
+    T(1374, y+33, (q.bad?'✖ ':'✔ ')+q.why+(r.state==='short'?' (current = card limit, value not given)':''), {'font-size':9, fill:q.bad?'#ff8a80':'#7fe0a8'}, W);
+    if(r.state==='loop' && r.raw!==null && !isNaN(r.raw)) T(1374, y+48, `${r.raw} ÷ 27648 × ${(n===0?ST.prog.PT.hi-ST.prog.PT.lo:ST.prog.TT.hi-ST.prog.TT.lo)} + ${n===0?ST.prog.PT.lo:ST.prog.TT.lo}`, {'font-size':8.5, fill:'#6f7c88', class:'mono'}, W);
+  });
+  T(1374, 728, '4 mA = 0 · 20 mA = 27648 · overflow > 22.81 mA', {'font-size':8, fill:'#6f7c88'}, W);
+  T(1374, 742, 'underflow < 1.185 mA · BAD if < 3.8 or > 21 mA*', {'font-size':8, fill:'#6f7c88'}, W);
+}
+function drawSettings(res){
+  S.innerHTML = '';
+  T(1374, 790, 'AI CARD CH0 / CH1', {'font-size':9.5, fill:'#1f8f86', 'letter-spacing':1.4, 'font-weight':700}, S);
+  const lines = ['type: current, 2-wire transmitter', 'range: 4-20 mA', 'wire break diag: '+(ST.wbd?'ON, limit '+ST.wbl+' mA':'OFF (card default)'), 'CH2-CH7: not used'];
+  lines.forEach((s,i)=>T(1374, 808+i*15, s, {'font-size':10, fill:'#3f4a55'}, S));
+  T(1374, 866, '* program check: our example, not a card rule', {'font-size':8.5, fill:'#6a7681'}, S);
+  T(1374, 888, 'LOOP COLOURS IN THIS SIMULATOR', {'font-size':9.5, fill:'#1f8f86', 'letter-spacing':1.2, 'font-weight':700}, S);
+  [['#c8322b','red / white = +  (our site standard)'],['#1e2124','black = −'],['#c4c9ce','drain wire = cable shield'],['#ffd46a','glow = loop current flowing']].forEach(([c,s],i)=>{
+    E('rect', {x:1374, y:898+i*16, width:18, height:6, rx:2, fill:c, stroke:'#333', 'stroke-width':.5}, S); T(1398, 905+i*16, s, {'font-size':9.5, fill:'#3f4a55'}, S); });
+}
+function led(el, on){ el.setAttribute('fill', on ? (on==='g'?'url(#gLedG)':(on==='r'?'url(#gLedR)':'url(#gLedA)')) : 'url(#gLedOff)'); }
+
+/* ============================================================ test kit drawing */
+function drawKit(res){
+  TK.innerHTML = '';
+  const m = measure(res), mode = ST.mode;
+  const help = {wire:'Choose a tool on the right to measure.', pol:'Polarity tester: power ON, tap two points.', ohm:'Multimeter Ω: power OFF, tap two points.', clamp:'mA clamp: power ON, tap a core.'}[mode];
+  tkHelp.textContent = help;
+  // multimeter
+  const g1 = E('g', {}, TK); const on1 = mode==='ohm';
+  E('rect', {x:40, y:520, width:200, height:300, rx:22, fill:'#e3a72f', stroke:on1?'#1f8f86':'#8a6418', 'stroke-width':on1?4:2}, g1);
+  E('rect', {x:54, y:534, width:172, height:272, rx:14, fill:'url(#gMeterY)'}, g1);
+  E('rect', {x:66, y:548, width:148, height:60, rx:5, fill:on1?'#c9d6c4':'#7d8a7a', stroke:'#1b1f22'}, g1);
+  T(208, 590, on1 ? (m.txt||'') : '', {'font-size':26, fill:'#121815', 'text-anchor':'end', class:'mono', 'font-weight':700}, g1);
+  if(on1 && m.beep) T(74, 566, '•)))', {'font-size':11, fill:'#121815', class:'mono'}, g1);
+  E('circle', {cx:140, cy:680, r:46, fill:'#1d2125', stroke:'#0b0d0f', 'stroke-width':2}, g1);
+  E('circle', {cx:140, cy:680, r:30, fill:'url(#gAlu)'}, g1);
+  const a = on1 ? -50 : 0; E('rect', {x:136, y:640, width:8, height:30, rx:3, fill:'#e3a72f', transform:`rotate(${a} 140 680)`}, g1);
+  ['OFF','V','Ω •)))','mA'].forEach((s,i)=>{ const an = (-140+i*45)*Math.PI/180; T(140+60*Math.cos(an), 684+60*Math.sin(an), s, {'font-size':9, fill:'#d6dde3', 'text-anchor':'middle'}, g1); });
+  E('circle', {cx:100, cy:780, r:9, fill:'#111', stroke:'#555'}, g1); E('circle', {cx:180, cy:780, r:9, fill:'#a32018', stroke:'#555'}, g1);
+  T(100, 800, 'COM', {'font-size':8, fill:'#d6dde3', 'text-anchor':'middle'}, g1); T(180, 800, 'VΩ', {'font-size':8, fill:'#d6dde3', 'text-anchor':'middle'}, g1);
+  T(140, 840, 'MULTIMETER', {'font-size':10, fill:'#4e5a65', 'text-anchor':'middle', 'font-weight':700}, g1);
+  // polarity tester
+  const g2 = E('g', {}, TK); const on2 = mode==='pol';
+  E('rect', {x:268, y:540, width:132, height:250, rx:26, fill:'url(#gMeter)', stroke:on2?'#1f8f86':'#111', 'stroke-width':on2?4:2}, g2);
+  E('rect', {x:288, y:562, width:92, height:34, rx:6, fill:'#11161a'}, g2);
+  T(334, 584, 'POLARITY', {'font-size':10, fill:'#9aa6b2', 'text-anchor':'middle', 'letter-spacing':1}, g2);
+  const lg = E('circle', {cx:306, cy:640, r:15, fill:on2&&m.led==='g'?'url(#gLedG)':'url(#gLedOff)', stroke:'#000'}, g2);
+  const lr = E('circle', {cx:362, cy:640, r:15, fill:on2&&m.led==='r'?'url(#gLedR)':'url(#gLedOff)', stroke:'#000'}, g2);
+  if(on2&&m.led==='g') lg.setAttribute('filter','url(#glow)'); if(on2&&m.led==='r') lr.setAttribute('filter','url(#glow)');
+  T(306, 676, '+ OK', {'font-size':10, fill:'#d6dde3', 'text-anchor':'middle'}, g2); T(362, 676, 'REV', {'font-size':10, fill:'#d6dde3', 'text-anchor':'middle'}, g2);
+  E('circle', {cx:306, cy:740, r:8, fill:'#a32018'}, g2); E('circle', {cx:362, cy:740, r:8, fill:'#111', stroke:'#555'}, g2);
+  T(306, 764, 'red', {'font-size':8, fill:'#d6dde3', 'text-anchor':'middle'}, g2); T(362, 764, 'black', {'font-size':8, fill:'#d6dde3', 'text-anchor':'middle'}, g2);
+  T(334, 840, 'POLARITY TESTER', {'font-size':10, fill:'#4e5a65', 'text-anchor':'middle', 'font-weight':700}, g2);
+  // clamp meter
+  const g3 = E('g', {}, TK); const on3 = mode==='clamp';
+  E('path', {d:'M480 610 C 470 540 520 520 548 522 C 590 524 616 560 606 612 L590 612 C 598 572 578 548 548 548 C 516 548 494 572 500 610 Z', fill:'#e3a72f', stroke:on3?'#1f8f86':'#8a6418', 'stroke-width':on3?4:2}, g3);
+  E('rect', {x:470, y:606, width:156, height:214, rx:22, fill:'#e3a72f', stroke:on3?'#1f8f86':'#8a6418', 'stroke-width':on3?4:2}, g3);
+  E('rect', {x:482, y:620, width:132, height:190, rx:14, fill:'url(#gMeterY)'}, g3);
+  E('rect', {x:492, y:632, width:112, height:54, rx:5, fill:on3?'#c9d6c4':'#7d8a7a', stroke:'#1b1f22'}, g3);
+  T(598, 670, on3 ? (m.txt||'') : '', {'font-size':21, fill:'#121815', 'text-anchor':'end', class:'mono', 'font-weight':700}, g3);
+  T(548, 720, 'mA DC clamp', {'font-size':10, fill:'#d6dde3', 'text-anchor':'middle'}, g3);
+  T(548, 840, 'mA CLAMP METER', {'font-size':10, fill:'#4e5a65', 'text-anchor':'middle', 'font-weight':700}, g3);
+  // result line
+  const sub = (mode==='wire') ? 'Wire mode: drag or tap the core ends.' : (m.sub||'');
+  E('rect', {x:40, y:870, width:630, height:52, rx:8, fill:'#ffffff', stroke:'#c3cbd2'}, TK);
+  T(56, 892, (mode==='ohm'?'Multimeter: ':mode==='pol'?'Polarity tester: ':mode==='clamp'?'Clamp: ':'')+sub, {'font-size':12, fill:m.bad?'#b3261e':'#1d2228'}, TK);
+  if(mode==='ohm' || mode==='pol'){
+    const nm = t => t ? (PTS[t]?PTS[t].label:(ENDS[t]? COND[ENDS[t].cond].cable+' '+COND[ENDS[t].cond].name+' (loose end)':t)) : '—';
+    T(56, 912, `red probe: ${nm(ST.probes.rl)}   ·   black probe: ${nm(ST.probes.kl)}   ·   next tap = ${ST.probes.next==='r'?'RED':'BLACK'}`, {'font-size':10, fill:'#5b6773'}, TK);
+  }
+  T(40, 950, 'The tools ignore the electronics inside the transmitters and the card.', {'font-size':10, fill:'#6a7681'}, TK);
+  T(40, 966, 'In a real plant: work under permit, disconnect before measuring ohms, follow your site procedure.', {'font-size':10, fill:'#6a7681'}, TK);
+  T(40, 994, 'RotorWise · Loop Simulator v1', {'font-size':10, fill:'#9aa4ae'}, TK);
+  // probe markers on the diagram
+  L.probe.innerHTML = '';
+  if(mode==='ohm' || mode==='pol'){
+    [['r','#d1261b'],['k','#111']].forEach(([k,c]) => { const lab = ST.probes[k+'l']; if(!lab) return;
+      const xy = PTS[lab] ? [PTS[lab].x, PTS[lab].y] : tipPos(ENDS[lab]);
+      const g = E('g', {transform:`translate(${xy[0]} ${xy[1]})`, 'pointer-events':'none'}, L.probe);
+      E('path', {d:'M0 0 L-6 -14 L-4 -46 L4 -46 L6 -14 Z', fill:c, stroke:'#fff', 'stroke-width':1.2}, g);
+      E('circle', {cx:0, cy:0, r:3, fill:'#ddd'}, g); });
+  }
+  if(mode==='clamp' && ST.clampOn && wireEls[ST.clampOn]){
+    const tmp = E('path', {d:wireEls[ST.clampOn].d}, L.probe); const len = tmp.getTotalLength(); const q = tmp.getPointAtLength(len*0.55); tmp.remove();
+    const g = E('g', {transform:`translate(${q.x} ${q.y})`, 'pointer-events':'none'}, L.probe);
+    E('circle', {cx:0, cy:0, r:13, fill:'none', stroke:'#e3a72f', 'stroke-width':6}, g); E('circle', {cx:0, cy:0, r:13, fill:'none', stroke:'#8a6418', 'stroke-width':1}, g);
+    E('rect', {x:-8, y:12, width:16, height:28, rx:4, fill:'#e3a72f', stroke:'#8a6418'}, g);
+  }
+}
+
+/* ============================================================ transmitter displays, LEDs */
+function drawDevices(res){
+  const pt = res.ch.find(r => r.tx==='PT'), ptPowered = ST.power && pt && pt.state==='loop';
+  const bg = document.getElementById('ptLcdBg'); bg.setAttribute('fill', ptPowered?'url(#gGlass)':'url(#gGlassOff)');
+  if(ptPowered){ if(ST.ptFail){ ptLcd1.textContent = 'ALARM'; ptLcd1.setAttribute('font-size', 19); ptLcd2.textContent = 'FAIL '+(ST.ptAl==='H'?'HI':'LO'); }
+    else { ptLcd1.setAttribute('font-size', 25); ptLcd1.textContent = ST.p.toFixed(2); ptLcd2.textContent = 'bar'; } }
+  else { ptLcd1.textContent = ''; ptLcd2.textContent = ''; }
+  led(psuLed, ST.power?'g':null);
+  cpuLeds.forEach((l,i)=> led(l, ST.power ? (i===0?'g':(i===1 && (res.ch[0].wb||res.ch[1].wb)?'r':null)) : null));
+  cpuTxt.textContent = ST.power ? 'RUN' : '';
+  led(cardLeds.PWR, ST.power?'g':null); led(cardLeds.RUN, ST.power?'g':null);
+  const anyDiag = res.ch.some(r => r.wb);
+  led(cardLeds.ERROR, ST.power && anyDiag ? 'r' : null);
+  chLed.forEach((c,i) => { const r = res.ch[i];
+    led(c.g, ST.power && i<2 && !r.wb ? 'g' : null);
+    led(c.r, ST.power && r.wb ? 'r' : null); });
+  if(ST.power && anyDiag) cardLeds.ERROR.classList.add('blink'); else cardLeds.ERROR.classList.remove('blink');
+}
+
+/* ============================================================ checker */
+function nodeStory(res, n){
+  const m = res.net.mem[n] || [];
+  const pts = m.filter(x => PTS[x]).map(x => PTS[x].label);
+  const cs = m.filter(x => COND[x]).map(x => COND[x].cable+' '+COND[x].name);
+  return {pts, cs};
+}
+function check(){
+  const res = evaluate(), out = [];
+  const add = (sev, text, ref) => out.push({sev, text, ref});
+  const unl = Object.keys(ENDS).filter(k => !ENDS[k].land && !(k==='C1d.a' || k==='C2d.a'));
+  if(unl.length){ add('info', unl.length+' core end'+(unl.length>1?'s are':' is')+' not landed yet: '+unl.slice(0,6).map(k=>COND[ENDS[k].cond].cable+' '+COND[ENDS[k].cond].name+' at '+zoneName(ENDS[k].zone)).join('; ')+(unl.length>6?' …':'')+'.'); }
+  // PT loop
+  const pt = res.tx.PT;
+  if(pt.test) add('err', 'PT-101: a loop wire is on the TEST terminal. Never put the loop on TEST — the voltage may burn out the reverse-polarity protection diode behind it. Use + and PWR/COMM −.', 'pressure transmitter manual, wiring section p.46');
+  if(pt.ch===0) add('ok', 'PT-101 loop: + goes to card terminal 1 (U_V0) and − returns to terminal 2 (I0+). Polarity correct, channel 0.', 'card manual Fig 3-4 p.15');
+  else if(pt.ch>0) add('warn', `PT-101 is wired correctly but to channel ${pt.ch}, not channel 0. The PLC reads it as channel ${pt.ch}: on our HMI it shows up under the wrong tag (or not at all).`, 'card manual Fig 3-4 p.15 (terminal pairs per channel)');
+  else if(pt.rev>=0) add('err', `PT-101 polarity is reversed: + is on the card's I${pt.rev}+ side and − on U_V${pt.rev}. The transmitter's protection blocks the current, so the loop reads 0 mA and the card sees a wire break.`, 'pressure transmitter manual, troubleshooting table p.77 (zero mA → check for reversed polarity)');
+  else if(pt.crossed) add('err', 'PT-101: its + and − land on two different channels. Each 2-wire transmitter needs one channel pair: U_Vn and In+ of the same channel.', 'card manual Fig 3-4 p.15');
+  else if(pt.shorted) add('err', 'PT-101 + and − are connected together: the transmitter is short-circuited.', '');
+  else { const s1 = nodeStory(res, pt.np), s2 = nodeStory(res, pt.nm);
+    add('err', 'PT-101 loop is not closed. Follow the + wire: it reaches '+(s1.pts.length>1? s1.pts.filter(x=>x!=='PT-101 terminal +').join(' → ') : 'nothing')+'. Follow the − wire: it reaches '+(s2.pts.length>1? s2.pts.filter(x=>x!=='PT-101 terminal PWR/COMM −').join(' → ') : 'nothing')+'. Target: + to card terminal 1 (U_V0), − to terminal 2 (I0+).', 'card manual Fig 3-4 p.15'); }
+  // TT loop
+  const tt = res.tx.TT;
+  if(tt.ch===1) add('ok', 'TT-101 loop: + to card terminal 4 (U_V1), − back to terminal 5 (I1+). Polarity correct, channel 1.', 'card manual Fig 3-4 p.15');
+  else if(tt.ch===0) add('warn', 'TT-101 is wired correctly but to channel 0 — the PLC scales it as PT-101 (bar). Swap the pairs at the card.', 'card manual Fig 3-4 p.15');
+  else if(tt.ch>1) add('warn', `TT-101 is wired correctly but to channel ${tt.ch}, not channel 1.`, 'card manual Fig 3-4 p.15');
+  else if(tt.rev>=0) add('err', `TT-101 polarity is reversed (+ on I${tt.rev}+, − on U_V${tt.rev}). No current flows: 0 mA, wire break on the card.`, 'temperature transmitter manual, troubleshooting (check polarity at the signal terminals)');
+  else if(tt.crossed) add('err', 'TT-101: + and − land on two different channels.', 'card manual Fig 3-4 p.15');
+  else { const s1 = nodeStory(res, tt.np), s2 = nodeStory(res, tt.nm);
+    add('err', 'TT-101 loop is not closed. + reaches '+(s1.pts.length>1? s1.pts.filter(x=>x!=='TT-101 terminal +').join(' → ') : 'nothing')+'; − reaches '+(s2.pts.length>1? s2.pts.filter(x=>x!=='TT-101 terminal −').join(' → ') : 'nothing')+'. Target: + to card terminal 4 (U_V1), − to terminal 5 (I1+).', 'card manual Fig 3-4 p.15'); }
+  // Pt100
+  const r = res.rtd;
+  if(r.pwrOnSensor) add('err', 'A field-cable core is on a Pt100 sensor terminal (1-6). The loop pair goes on + and − only.', 'temperature transmitter manual Fig 4-1 p.75');
+  if(r.onPwr) add('err', 'A Pt100 lead is on the + or − power terminal. The Pt100 leads go on the sensor terminals 1-4.', 'temperature transmitter manual Fig 4-2 p.75');
+  if(r.ok) add('ok', 'Pt100 4-wire: '+(r.swappedEnds?'white pair on 1+2, red pair on 3+4 (ends swapped — an RTD element has no polarity, so it still reads the same; most sites keep red on 1+2).':'red pair (one end) on 1 + 2, white pair (other end) on 3 + 4.'), 'temperature transmitter manual Fig 4-2 p.75');
+  else if(!r.onPwr){ if(r.missing===4) add('err', 'Pt100 leads not landed: the transmitter sees an open sensor and drives its output to the alarm level.', 'temperature transmitter manual, diagnostics (failure-mode switch)');
+    else add('err', 'Pt100 wiring is wrong: for 4-wire, the two leads from one end of the element go on 1 + 2 and the two from the other end on 3 + 4. Wrong wiring gives a wrong reading or a sensor failure; this simulator shows it as a sensor failure (output to the alarm level).', 'temperature transmitter manual Fig 4-2 p.75'); }
+  // shields
+  const ln = k => ENDS[k].land;
+  const f = res.net.f, earth = f('EARTH');
+  if(ln('C1d.a')==='PTG' || ln('C2d.a')) add('warn', 'A drain wire is landed at the transmitter end. Trim the shield and insulate it at the transmitter; it is earthed at the power-supply (cabinet) end only.', 'pressure transmitter manual p.50 (shield grounding)');
+  if(ln('C1d.a') && ln('C1d.a')!=='PTG') add('err', 'The PT-101 drain wire is on a signal terminal at the transmitter.', '');
+  const shOK = f('C1d')===f('C3d') && f('C2d')===f('C3d') && f('C3d')===earth;
+  if(shOK && !ln('C1d.a') && !ln('C2d.a')) add('ok', 'Shields: both field drains joined to the home-run drain in JB-1 and earthed at the cabinet only.', 'pressure transmitter manual p.50');
+  else if(!shOK){
+    if(f('C3d')!==earth) add('warn', 'The home-run drain is not on the cabinet shield earth bar. Signals still work on the bench, but in a plant an unearthed shield picks up noise.', 'pressure transmitter manual p.50');
+    if(f('C1d')!==f('C3d') || f('C2d')!==f('C3d')) add('warn', 'Not every field drain is joined to the home-run drain in JB-1 (use the bridged S terminals).', 'pressure transmitter manual p.50 (shield continuous through the junction box)');
+  }
+  // drains on signal terminals
+  ['C1d','C2d','C3d'].forEach(c => { const n = f(c); const sig = (res.net.mem[n]||[]).filter(x => PTS[x] && /^AI|PT\+|PT-|TT\+|TT-|JB[1-6]/.test(x)); if(sig.length) add('err', COND[c].cable+' drain wire touches a signal terminal ('+sig.map(x=>PTS[x].label).join(', ')+').', ''); });
+  // scaling
+  if(ST.prog.PT.lo!==0 || ST.prog.PT.hi!==10) add('warn', `Program scaling for PT-101 is ${ST.prog.PT.lo}-${ST.prog.PT.hi} bar, but the transmitter is ranged 0-10 bar. The HMI will not match the transmitter display.`, 'our plant data');
+  if(ST.prog.TT.lo!==0 || ST.prog.TT.hi!==150) add('warn', `Program scaling for TT-101 is ${ST.prog.TT.lo}-${ST.prog.TT.hi} °C, but the transmitter is ranged 0-150 °C.`, 'our plant data');
+  if(!ST.power) add('info', 'Power is OFF. Switch it on to see the loop work.');
+  return out;
+}
+function showReport(list){
+  const ic = {ok:'✔', err:'✖', warn:'!', info:'i'};
+  $('report').innerHTML = list.map(x => `<div class="it ${x.sev}"><span class="ic">${ic[x.sev]}</span><span>${x.text}${x.ref?`<span class="ref">${x.ref}</span>`:''}</span></div>`).join('') || 'Nothing to report.';
+  const errs = list.filter(x=>x.sev==='err').length;
+  if(!errs && list.some(x=>x.sev==='ok')) toast('No wiring errors found.');
+}
+
+/* ============================================================ progress steps */
+const STEPS = [
+  ['PT-101 loop closed, right polarity, channel 0', res => res.tx.PT.ch===0 && !res.tx.PT.test],
+  ['TT-101 loop closed, right polarity, channel 1', res => res.tx.TT.ch===1],
+  ['Pt100 wired 4-wire (1+2 / 3+4)', res => res.rtd.ok && !res.rtd.onPwr],
+  ['Shields joined in JB-1, earthed in the cabinet only', res => { const f = res.net.f; return f('C1d')===f('C3d') && f('C2d')===f('C3d') && f('C3d')===f('EARTH') && !ENDS['C1d.a'].land && !ENDS['C2d.a'].land; }],
+  ['Power on: both values GOOD on the HMI', res => ST.power && !quality(res,0).bad && !quality(res,1).bad],
+  ['Polarity checked at a transmitter with the tester', res => ST.polChecked]
+];
+function drawSteps(res){ $('steps').innerHTML = STEPS.map(([s,fn]) => `<li class="${fn(res)?'done':''}">${s}</li>`).join(''); }
+
+/* ============================================================ refresh */
+let LAST = null;
+function refresh(){
+  const res = evaluate(); LAST = res;
+  drawWires(res); drawHMI(res); drawWatch(res); drawSettings(res); drawKit(res); drawDevices(res); drawSteps(res);
+  const hint = ST.sel ? 'Selected: '+COND[ENDS[ST.sel].cond].cable+' — '+COND[ENDS[ST.sel].cond].name+'. Tap a terminal ('+zoneName(ENDS[ST.sel].zone)+').' :
+    ({wire:'Drag a core end onto a terminal. Each cable end can only reach the device it enters.', pol:'Tap two points: first = RED probe, second = BLACK probe.', ohm:'Switch the power off, then tap two points (ring out cores, measure the Pt100).', clamp:'Tap any core to put the clamp on it.'})[ST.mode];
+  $('hint').textContent = hint;
+}
+
+/* ============================================================ controls */
+function sw(id, key, after){ const el = $(id); el.classList.toggle('on', !!ST[key]); el.onclick = () => { ST[key] = !ST[key]; el.classList.toggle('on', ST[key]); if(after) after(); refresh(); }; }
+sw('pwr', 'power', () => toast(ST.power?'Power ON — 24 V to the cabinet.':'Power OFF.'));
+sw('ptfail', 'ptFail'); sw('ttfail', 'ttFail'); sw('wbd', 'wbd');
+$('ptal').onchange = e => { ST.ptAl = e.target.value; refresh(); };
+$('ttal').onchange = e => { ST.ttAl = e.target.value; refresh(); };
+$('wbl').onchange = e => { ST.wbl = +e.target.value; refresh(); };
+$('pp').oninput = e => { ST.p = +e.target.value; $('ppv').textContent = ST.p.toFixed(2)+' bar'; refresh(); };
+$('tt').oninput = e => { ST.t = +e.target.value; $('ttv').textContent = ST.t.toFixed(1)+' °C'; refresh(); };
+[['ptlo','PT','lo'],['pthi','PT','hi'],['ttlo','TT','lo'],['tthi','TT','hi']].forEach(([id,k,f]) => $(id).oninput = e => { const v = parseFloat(e.target.value); if(!isNaN(v)){ ST.prog[k][f] = v; refresh(); } });
+document.querySelectorAll('#modes button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#modes button').forEach(x => x.classList.toggle('on', x===b)); ST.mode = b.dataset.m; ST.sel = null;
+  $('modehelp').textContent = {wire:'Drag core ends onto terminals.', pol:'Polarity tester: works with the power ON. First tap = red probe, second tap = black probe.', ohm:'Multimeter on Ω: only with the power OFF. Ring out a core end to end, or measure the Pt100 between a red and a white lead.', clamp:'Clamp meter: works with the power ON. Tap any core.'}[ST.mode];
+  refresh(); });
+$('bCheck').onclick = () => showReport(check());
+function setWiring(map){ for(const id in ENDS) ENDS[id].land = map[id] || null; }
+function syncInputs(){ $('ptlo').value = ST.prog.PT.lo; $('pthi').value = ST.prog.PT.hi; $('ttlo').value = ST.prog.TT.lo; $('tthi').value = ST.prog.TT.hi;
+  ['pwr','ptfail','ttfail','wbd'].forEach((id,i)=> $(id).classList.toggle('on', !!ST[['power','ptFail','ttFail','wbd'][i]])); }
+$('bEmpty').onclick = () => { setWiring({}); ST.fault = null; ST.power = false; ST.prog = {PT:{lo:0,hi:10}, TT:{lo:0,hi:150}}; ST.ptFail = ST.ttFail = false; ST.polChecked = false; syncInputs(); $('bReveal').disabled = true; $('report').textContent = 'Fresh start: every core is loose. Start at the transmitters.'; refresh(); };
+$('bSolve').onclick = () => { setWiring(SOLUTION); ST.fault = null; ST.prog = {PT:{lo:0,hi:10}, TT:{lo:0,hi:150}}; ST.ptFail = ST.ttFail = false; syncInputs(); $('bReveal').disabled = true; refresh(); toast('Correct wiring shown. Switch the power on and play with the values.'); };
+const FAULTS = [
+  {t:'PT-101 pair swapped at the card', a:'At the card, pair 1 white is on terminal 2 and black on terminal 1. The PT-101 loop is reversed: 0 mA, wire break on CH0.', w:{'C3p1w.b':'AI2','C3p1k.b':'AI1'}},
+  {t:'PT-101 cores swapped in the junction box', a:'In JB-1 (field side) the PT-101 red core is on terminal 2 and black on terminal 1. Everything after it is right, but the polarity is reversed: 0 mA.', w:{'C1r.b':'JB2t','C1k.b':'JB1t'}},
+  {t:'Pairs crossed at the card', a:'Pair 1 (PT-101) is on CH1 (terminals 4/5) and pair 2 (TT-101) on CH0 (1/2). Both loops work, but the PLC scales pressure as temperature and the other way round.', w:{'C3p1w.b':'AI4','C3p1k.b':'AI5','C3p2w.b':'AI1','C3p2k.b':'AI2'}},
+  {t:'Loose wire at the transmitter', a:'The PT-101 black core is not landed on PWR/COMM −. Open loop: 0 mA, wire break on CH0.', w:{'C1k.a':null}},
+  {t:'Loop on the TEST terminal', a:'The PT-101 black core is on TEST instead of PWR/COMM −. Never wire the loop to TEST: the voltage may burn out the diode behind it.', w:{'C1k.a':'PTT'}},
+  {t:'Pt100 leads mixed', a:'One red lead is on terminal 3 and one white lead on terminal 2. The ends of the element are mixed up: TT-101 goes to its alarm level.', w:{'RA2':'TT3','RB1':'TT2'}},
+  {t:'Pt100 lead off', a:'One white lead of the Pt100 is not landed (terminal 4 empty). The transmitter is set for 4-wire and sees a sensor fault: alarm level.', w:{'RB2':null}},
+  {t:'Shield earthed at both ends', a:'The PT-101 drain wire is landed on the transmitter ground screw as well as in the cabinet. The shield must be earthed at the supply end only.', w:{'C1d.a':'PTG'}},
+  {t:'Wrong scaling in the program', a:'The wiring is perfect. The PLC program scales PT-101 as 0-100 bar instead of 0-10 bar: the transmitter display says 4.20 bar, the HMI says 42.0.', prog:{PT:{lo:0,hi:100}}},
+  {t:'TT-101 pair swapped in the junction box', a:'On the home-run side of JB-1, pair 2 white is on terminal 4 and black on terminal 3. TT-101 polarity reversed: 0 mA, wire break on CH1.', w:{'C3p2w.a':'JB4b','C3p2k.a':'JB3b'}}
+];
+$('bFault').onclick = () => {
+  let i; do { i = Math.floor(Math.random()*FAULTS.length); } while(FAULTS.length>1 && ST.fault && ST.fault.i===i);
+  const fl = FAULTS[i]; const map = Object.assign({}, SOLUTION); if(fl.w) for(const k in fl.w){ if(fl.w[k]===null) delete map[k]; else map[k] = fl.w[k]; }
+  setWiring(map); ST.prog = {PT:{lo:0,hi:10}, TT:{lo:0,hi:150}}; if(fl.prog) ST.prog = Object.assign(ST.prog, JSON.parse(JSON.stringify(fl.prog)));
+  ST.power = true; ST.ptFail = ST.ttFail = false; ST.fault = {i}; syncInputs();
+  $('bReveal').disabled = false; $('faultTxt').textContent = 'A fault is hidden somewhere. Look at the HMI, the watch table, the transmitter display and the card LEDs, then use the tools. Fix it and press "Check my wiring".';
+  $('report').textContent = '—'; refresh(); toast('Something is wrong in this loop. Find it!', 3200);
+};
+$('bReveal').onclick = () => { if(!ST.fault) return; const fl = FAULTS[ST.fault.i]; $('faultTxt').innerHTML = '<b>Answer — '+fl.t+':</b> '+fl.a; };
+
+/* init */
+$('modehelp').textContent = 'Drag core ends onto terminals.';
+setWiring({});
+refresh();
+</script>
+</body>
+</html>
